@@ -2,18 +2,19 @@ package com.devin.app.store.index;
 
 import android.app.Activity;
 import android.content.Context;
+import android.nfc.Tag;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.devin.app.store.R;
 import com.devin.app.store.base.BaseApp;
@@ -24,18 +25,16 @@ import com.devin.app.store.index.model.AppModel;
 import com.devin.tool_aop.annotation.CatchException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.zip.CheckedOutputStream;
 
 /**
  * Created by Devin on 2018/1/9.
  * <p>
  * 推荐页面
  */
-public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> {
+public class IndexBaseAdapter extends BaseAdapter {
 
-    private static final String TAG = IndexAdapter.class.getSimpleName();
+    private static final String TAG = IndexBaseAdapter.class.getSimpleName();
 
     private Context context;
 
@@ -52,72 +51,8 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
         notifyDataSetChanged();
     }
 
-    public IndexAdapter(Context context) {
+    public IndexBaseAdapter(Context context) {
         this.context = context;
-    }
-
-    @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.index_fragment_item, null));
-    }
-
-    @Override
-    @CatchException
-    public void onBindViewHolder(final ViewHolder holder, final int position) {
-        final AppModel model = data.get(position);
-        holder.tv_app_name.setText(model.appName);
-        holder.rating_bar.setRating(model.rating);
-        holder.tv_install.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (model.downloadStatus == AppModel.PREPARE_DOWNLOAD) {
-                    model.downloadStatus = AppModel.DOWNLOADING;
-                    holder.layout_progressbar.setVisibility(View.VISIBLE);
-                    DownloadApkUtils
-                            .get((Activity) context, new DownloadUtils.DownloadCallBack() {
-                                @Override
-                                public void onResponse(final DownloadUtils.CallBackBean bean) {
-                                    if (bean.max > bean.progressLength) {
-                                        BaseApp.mHandler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                int percent = (int) ((double) bean.progressLength / bean.max * 100);
-                                                model.downloadProgress = percent;
-                                                notifyDataSetChanged();
-                                            }
-                                        });
-                                    }
-                                    if (bean.max == bean.progressLength) {
-                                        BaseApp.mHandler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                model.downloadStatus = AppModel.DOWNLOADED;
-                                                model.localPath = bean.path;
-                                                model.downloadProgress = 100;
-                                                holder.layout_progressbar.setVisibility(View.GONE);
-                                                context.startActivity(DownloadApkUtils.getIntent(bean.path));
-                                                notifyDataSetChanged();
-                                            }
-                                        });
-                                    }
-                                }
-                            })
-                            .download(model.downloadUrl);
-                } else if (model.downloadStatus == AppModel.DOWNLOADED) {
-                    if (!TextUtils.isEmpty(model.localPath)) {
-                        context.startActivity(DownloadApkUtils.getIntent(model.localPath));
-                    }
-                }
-            }
-        });
-        holder.tv_size.setText(model.appSize + "M");
-        holder.tv_app_desc.setText(model.appDesc);
-        setDownloadStatus(model, holder);
-    }
-
-    @Override
-    public int getItemCount() {
-        return data.size();
     }
 
     private void setDownloadStatus(final AppModel model, final ViewHolder holder) {
@@ -149,21 +84,93 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
         }
     }
 
-    class DownloadTagModel {
-
-        public DownloadTagModel(View v, int position) {
-            this.v = v;
-            this.position = position;
-        }
-
-        View v;
-        int position;
+    @Override
+    public int getCount() {
+        return data.size();
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    @Override
+    public Object getItem(int i) {
+        return null;
+    }
 
-        View itemView;
+    @Override
+    public long getItemId(int i) {
+        return 0;
+    }
 
+    @Override
+    public View getView(int position, View view, ViewGroup viewGroup) {
+        if (view == null) {
+            view = LayoutInflater.from(context).inflate(R.layout.index_fragment_item, viewGroup, false);
+            ViewHolder vh = new ViewHolder();
+            vh.iv_app_cover = view.findViewById(R.id.iv_app_cover);
+            vh.tv_app_name = view.findViewById(R.id.tv_app_name);
+            vh.rating_bar = view.findViewById(R.id.rating_bar);
+            vh.tv_classify_name = view.findViewById(R.id.tv_classify_name);
+            vh.tv_size = view.findViewById(R.id.tv_size);
+            vh.tv_install = view.findViewById(R.id.tv_install);
+            vh.tv_app_desc = view.findViewById(R.id.tv_app_desc);
+            vh.layout_install = view.findViewById(R.id.layout_install);
+            vh.layout_progressbar = view.findViewById(R.id.layout_progressbar);
+            vh.tv_progress = view.findViewById(R.id.tv_progress);
+            view.setTag(vh);
+        }
+        final ViewHolder holder = (ViewHolder) view.getTag();
+        final AppModel model = data.get(position);
+        holder.tv_app_name.setText(model.appName);
+        holder.rating_bar.setRating(model.rating);
+        holder.rating_bar.setClickable(false);
+        holder.tv_install.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (model.downloadStatus == AppModel.PREPARE_DOWNLOAD) {
+                    model.downloadStatus = AppModel.DOWNLOADING;
+                    holder.layout_progressbar.setVisibility(View.VISIBLE);
+                    DownloadApkUtils
+                            .get((Activity) context, new DownloadUtils.DownloadCallBack() {
+                                @Override
+                                public void onResponse(final DownloadUtils.CallBackBean bean) {
+                                    if (bean.max > bean.progressLength) {
+                                        BaseApp.mHandler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                int percent = (int) ((double) bean.progressLength / bean.max * 100);
+                                                model.downloadProgress = percent;
+                                                LogUtils.d(TAG, "percent: " + percent);
+                                                holder.tv_progress.setText(percent + "%");
+                                            }
+                                        });
+                                    }
+                                    if (bean.max == bean.progressLength) {
+                                        BaseApp.mHandler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                model.downloadStatus = AppModel.DOWNLOADED;
+                                                model.localPath = bean.path;
+                                                model.downloadProgress = 100;
+                                                context.startActivity(DownloadApkUtils.getIntent(bean.path));
+                                                notifyDataSetChanged();
+                                            }
+                                        });
+                                    }
+                                }
+                            })
+                            .download(model.downloadUrl);
+                } else if (model.downloadStatus == AppModel.DOWNLOADED) {
+                    if (!TextUtils.isEmpty(model.localPath)) {
+                        context.startActivity(DownloadApkUtils.getIntent(model.localPath));
+                    }
+                }
+            }
+        });
+        holder.tv_size.setText(model.appSize + "M");
+        holder.tv_app_desc.setText(model.appDesc);
+        setDownloadStatus(model, holder);
+        return view;
+    }
+
+    class ViewHolder {
         ImageView iv_app_cover;
         TextView tv_app_name;
         RatingBar rating_bar;
@@ -174,20 +181,5 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
         TextView tv_install;
         TextView tv_app_desc;
         TextView tv_progress;
-
-        public ViewHolder(View itemView) {
-            super(itemView);
-            this.itemView = itemView;
-            iv_app_cover = itemView.findViewById(R.id.iv_app_cover);
-            tv_app_name = itemView.findViewById(R.id.tv_app_name);
-            rating_bar = itemView.findViewById(R.id.rating_bar);
-            tv_classify_name = itemView.findViewById(R.id.tv_classify_name);
-            tv_size = itemView.findViewById(R.id.tv_size);
-            tv_install = itemView.findViewById(R.id.tv_install);
-            tv_app_desc = itemView.findViewById(R.id.tv_app_desc);
-            layout_install = itemView.findViewById(R.id.layout_install);
-            layout_progressbar = itemView.findViewById(R.id.layout_progressbar);
-            tv_progress = itemView.findViewById(R.id.tv_progress);
-        }
     }
 }

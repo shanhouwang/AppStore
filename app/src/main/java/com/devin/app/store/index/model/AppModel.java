@@ -6,6 +6,8 @@ package com.devin.app.store.index.model;
 
 public class AppModel {
 
+    public int id;
+
     public String appName;
 
     /**
@@ -40,6 +42,11 @@ public class AppModel {
      * 本地地址
      */
     public String localPath;
+
+    /**
+     *下载进度
+     */
+    public int downloadProgress;
 
     public static final int PREPARE_DOWNLOAD = 0;
 

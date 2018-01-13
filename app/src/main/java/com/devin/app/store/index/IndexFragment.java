@@ -46,6 +46,7 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
     private MarsRefreshView mMarsRefreshView;
     private ProgressBar progressbar;
     private IndexAdapter mIndexAdapter;
+    private IndexBaseAdapter mIndexBaseAdapter;
     private volatile List<AppModel> models = new ArrayList<>();
 
     private void initView(View v) {
@@ -53,8 +54,9 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
         mMarsRefreshView = v.findViewById(R.id.marsRefreshView);
         progressbar = v.findViewById(R.id.progressbar);
         mIndexAdapter = new IndexAdapter(getContext());
-        mMarsRefreshView.setLinearLayoutManager()
-                .setAdapter(mIndexAdapter)
+        mIndexBaseAdapter = new IndexBaseAdapter(getContext());
+        mMarsRefreshView
+                .setAdapter(mIndexBaseAdapter)
                 .setMercuryOnLoadMoreListener(1, new MercuryOnLoadMoreListener() {
                     @Override
                     public void onLoadMore(final int page) {
@@ -65,11 +67,13 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                         ThreadUtils.get(ThreadUtils.Type.SCHEDULED).callBack(new ThreadUtils.CallBack() {
                             @Override
                             public void onResponse(Object obj) {
-                                mIndexAdapter.bindData(models);
+                                mIndexAdapter.bindLoadMoreData((List<AppModel>) obj);
+                                mIndexBaseAdapter.bindLoadMoreData((List<AppModel>) obj);
                             }
                         }).schedule(new ThreadUtils.MyRunnable() {
                             @Override
                             public Object execute() {
+                                List<AppModel> models = new ArrayList<>();
                                 for (int i = 10 * page; i < 10 * page + 10; i++) {
                                     AppModel appModel = new AppModel();
                                     appModel.appName = "应用名称 " + i;
@@ -80,7 +84,7 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                                     appModel.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
                                     models.add(appModel);
                                 }
-                                return null;
+                                return models;
                             }
                         }, 1 * 1000, TimeUnit.MILLISECONDS);
                     }
@@ -95,7 +99,8 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onResponse(Object obj) {
                 progressbar.setVisibility(View.GONE);
-                mIndexAdapter.bindData(models);
+                mIndexAdapter.initData(models);
+                mIndexBaseAdapter.initData(models);
             }
         }).schedule(new ThreadUtils.MyRunnable() {
             @Override
@@ -108,6 +113,12 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                     appModel.appClassify = "金融理财";
                     appModel.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
                     appModel.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
+                    if (i == 1) {
+                        appModel.downloadUrl = "http://imtt.dd.qq.com/16891/110A36BF492C6672528F40A4FFDB22B4.apk";
+                    }
+                    if (i == 2) {
+                        appModel.downloadUrl = "http://imtt.dd.qq.com/16891/3CC768370B43EDF35F56BB3948C77BA8.apk";
+                    }
                     models.add(appModel);
                 }
                 return null;

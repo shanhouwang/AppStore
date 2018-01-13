@@ -3,4 +3,5 @@
     <item name="module_base_iv" type="id" />
     <item name="module_base_container" type="id" />
     <item name="module_base_no_network_view" type="id" />
+    <item name="progress_bar" type="id" />
 </resources>
