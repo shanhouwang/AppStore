@@ -15,6 +15,8 @@ public class AppInfoDto extends RealmObject {
 
     public String appName;
 
+    public String packageName;
+
     /**
      * App分类
      */

@@ -2,6 +2,7 @@ package com.devin.app.store.index;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 
 import com.devin.app.store.R;
 import com.devin.app.store.base.BaseApp;
+import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.DownloadApkUtils;
 import com.devin.app.store.base.utils.DownloadUtils;
 import com.devin.app.store.index.model.AppInfoDto;
@@ -35,6 +37,8 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
     private Context context;
 
     private List<AppInfoDto> data = new ArrayList<>();
+
+    public static int CLICK_POSITION;
 
     public void initData(List<AppInfoDto> data) {
         this.data.clear();
@@ -65,6 +69,17 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
         holder.tv_install.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                CLICK_POSITION = position;
+
+                if (CommonUtils.isInstalled(context, model.packageName)) {
+                    try {
+                        CommonUtils.openApp(context, model.packageName);
+                    } catch (PackageManager.NameNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
                 if (model.downloadStatus == AppInfoDto.PREPARE_DOWNLOAD) {
                     holder.layout_progressbar.setVisibility(View.VISIBLE);
                     DownloadApkUtils
@@ -117,7 +132,7 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
         });
         holder.tv_size.setText(model.appSize + "M");
         holder.tv_app_desc.setText(model.appDesc);
-        setDownloadStatus(model, holder);
+        setStatus(model, holder);
     }
 
     @Override
@@ -125,7 +140,13 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
         return data.size();
     }
 
-    private void setDownloadStatus(final AppInfoDto model, final ViewHolder holder) {
+    private void setStatus(final AppInfoDto model, final ViewHolder holder) {
+        if (CommonUtils.isInstalled(context, model.packageName)) {
+            holder.tv_install.setText("打开");
+            holder.layout_install.setBackground(context.getDrawable(R.drawable.index_item_downloaded_bg));
+            holder.tv_install.setTextColor(context.getResources().getColor(R.color._ffffff));
+            return;
+        }
         switch (model.downloadStatus) {
             case AppInfoDto.PREPARE_DOWNLOAD:
                 holder.tv_install.setText("下载");

@@ -1,7 +1,12 @@
 package com.devin.app.store.base.utils;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.text.TextUtils;
 import android.view.inputmethod.InputMethodManager;
 
@@ -9,6 +14,7 @@ import com.devin.app.store.base.BaseApp;
 import com.devin.app.store.base.config.Config;
 
 import java.io.File;
+import java.util.List;
 
 public class CommonUtils {
 
@@ -125,5 +131,55 @@ public class CommonUtils {
             return true;
         }
         return false;
+    }
+
+    /**
+     * 检测应用是否安装
+     *
+     * @param context
+     * @param packageName
+     * @return
+     */
+    public static boolean isInstalled(Context context, String packageName) {
+        if (TextUtils.isEmpty(packageName)) {
+            return false;
+        }
+        PackageInfo info;
+        try {
+            info = context.getPackageManager().getPackageInfo(packageName, 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+        if (null == info) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * 打开第三方App
+     *
+     * @param context
+     * @param packageName
+     * @throws PackageManager.NameNotFoundException
+     */
+    public static void openApp(Context context, String packageName) throws PackageManager.NameNotFoundException {
+        PackageManager pm = context.getPackageManager();
+        PackageInfo pi = pm.getPackageInfo(packageName, 0);
+        Intent resolveIntent = new Intent(Intent.ACTION_MAIN, null);
+        resolveIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        resolveIntent.setPackage(pi.packageName);
+        List<ResolveInfo> apps = pm.queryIntentActivities(resolveIntent, 0);
+        ResolveInfo ri = apps.iterator().next();
+        if (ri != null) {
+            String pn = ri.activityInfo.packageName;
+            String className = ri.activityInfo.name;
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_LAUNCHER);
+            ComponentName cn = new ComponentName(pn, className);
+            intent.setComponent(cn);
+            context.startActivity(intent);
+        }
     }
 }

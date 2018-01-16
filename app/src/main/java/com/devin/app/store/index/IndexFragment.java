@@ -46,6 +46,11 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
         initView(view);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        mIndexAdapter.notifyItemChanged(IndexAdapter.CLICK_POSITION, R.id.tv_install);
+    }
 
     private MarsRefreshView mMarsRefreshView;
     private ProgressBar progressbar;
@@ -123,9 +128,11 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                     appInfoDto.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
                     appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
                     if (i == 1) {
+                        appInfoDto.packageName = "com.tencent.qqlive";
                         appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/110A36BF492C6672528F40A4FFDB22B4.apk";
                     }
                     if (i == 2) {
+                        appInfoDto.packageName = "com.cleanmaster.mguard_cn";
                         appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/3CC768370B43EDF35F56BB3948C77BA8.apk";
                     }
                     models.add(appInfoDto);
