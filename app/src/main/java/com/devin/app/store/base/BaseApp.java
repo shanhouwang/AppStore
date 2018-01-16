@@ -4,6 +4,7 @@ import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.devin.app.store.base.config.AppMigration;
 import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.SPUtils;
 import com.devin.app.store.base.utils.Utils;
@@ -42,7 +43,13 @@ public class BaseApp extends Application {
 
         Realm.init(this);
 
-        Realm.setDefaultConfiguration(new RealmConfiguration.Builder().directory(CommonUtils.getRealmDirectory()).build());
+        Realm.setDefaultConfiguration(new RealmConfiguration
+                .Builder()
+                .directory(CommonUtils.getRealmDirectory())
+                .schemaVersion(1)
+                .migration(new AppMigration())
+                .deleteRealmIfMigrationNeeded()
+                .build());
 
     }
 }

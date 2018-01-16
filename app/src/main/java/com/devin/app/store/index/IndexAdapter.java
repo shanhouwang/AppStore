@@ -32,8 +32,6 @@ import io.realm.Realm;
  */
 public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> {
 
-    private static final String TAG = IndexAdapter.class.getSimpleName();
-
     private Context context;
 
     private List<AppInfoDto> data = new ArrayList<>();

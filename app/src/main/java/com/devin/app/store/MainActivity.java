@@ -26,6 +26,7 @@ public class MainActivity extends BaseActivity {
         btl.setChecked(0, true);
         vp = findViewById(R.id.vp);
         vp.setAdapter(new MainAdapter(getSupportFragmentManager()));
+        vp.setOffscreenPageLimit(3);
         btl.setOnBottomTabClickListener(new OnBottomTabClickListener() {
             @Override
             public void onClick(int position) {
