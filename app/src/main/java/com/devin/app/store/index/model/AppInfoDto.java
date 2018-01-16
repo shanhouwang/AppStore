@@ -1,12 +1,17 @@
 package com.devin.app.store.index.model;
 
+import io.realm.RealmObject;
+import io.realm.annotations.Ignore;
+import io.realm.annotations.PrimaryKey;
+
 /**
  * Created by Devin on 2018/1/11.
  */
 
-public class AppModel {
+public class AppInfoDto extends RealmObject {
 
-    public int id;
+    @PrimaryKey
+    public long id;
 
     public String appName;
 
@@ -48,9 +53,12 @@ public class AppModel {
      */
     public int downloadProgress;
 
+    @Ignore
     public static final int PREPARE_DOWNLOAD = 0;
 
+    @Ignore
     public static final int DOWNLOADING = 1;
 
+    @Ignore
     public static final int DOWNLOADED = 2;
 }

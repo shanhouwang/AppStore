@@ -33,6 +33,26 @@ public class CommonUtils {
     }
 
     /**
+     * 得到Okhttp的缓存目录
+     *
+     * @return
+     */
+    public static File getRealmDirectory() {
+        if (SDCardUtils.isSDCardEnable()) {
+            String path = BaseApp.app.getExternalCacheDir() + File.separator + Config.REALM_CACHE + File.separator;
+            File f = new File(path);
+            boolean flag = f.mkdirs();
+            if (flag) {
+                return f;
+            } else {
+                return BaseApp.app.getCacheDir();
+            }
+        } else {
+            return BaseApp.app.getCacheDir();
+        }
+    }
+
+    /**
      * 传入格式 http://www.tp.com/tp.apk
      * <p>
      * 返回 tp.apk
@@ -84,6 +104,24 @@ public class CommonUtils {
             } catch (Exception e) {
                 return false;
             }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 判断文件存在否、被损坏否
+     *
+     * @param path
+     * @param fileSize
+     * @return
+     */
+    public static boolean isOkFile(String path, int fileSize) {
+        File f = new File(path);
+        if (!f.exists()) {
+            return false;
+        }
+        if (f.length() == fileSize) {
             return true;
         }
         return false;

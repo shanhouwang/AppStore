@@ -9,14 +9,18 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
 import com.devin.app.store.R;
+import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.ThreadUtils;
-import com.devin.app.store.index.model.AppModel;
+import com.devin.app.store.index.dao.AppDao;
+import com.devin.app.store.index.model.AppInfoDto;
 import com.devin.refreshview.MarsRefreshView;
 import com.devin.refreshview.MercuryOnLoadMoreListener;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import io.realm.RealmResults;
 
 /**
  * Created by Devin on 2018/1/9.
@@ -47,7 +51,6 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
     private ProgressBar progressbar;
     private IndexAdapter mIndexAdapter;
     private IndexBaseAdapter mIndexBaseAdapter;
-    private volatile List<AppModel> models = new ArrayList<>();
 
     private void initView(View v) {
         v.findViewById(R.id.layout_search).setOnClickListener(this);
@@ -55,8 +58,10 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
         progressbar = v.findViewById(R.id.progressbar);
         mIndexAdapter = new IndexAdapter(getContext());
         mIndexBaseAdapter = new IndexBaseAdapter(getContext());
+
         mMarsRefreshView
-                .setAdapter(mIndexBaseAdapter)
+                .setLinearLayoutManager()
+                .setAdapter(mIndexAdapter)
                 .setMercuryOnLoadMoreListener(1, new MercuryOnLoadMoreListener() {
                     @Override
                     public void onLoadMore(final int page) {
@@ -67,22 +72,23 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                         ThreadUtils.get(ThreadUtils.Type.SCHEDULED).callBack(new ThreadUtils.CallBack() {
                             @Override
                             public void onResponse(Object obj) {
-                                mIndexAdapter.bindLoadMoreData((List<AppModel>) obj);
-                                mIndexBaseAdapter.bindLoadMoreData((List<AppModel>) obj);
+                                mIndexAdapter.bindLoadMoreData((List<AppInfoDto>) obj);
+                                mIndexBaseAdapter.bindLoadMoreData((List<AppInfoDto>) obj);
                             }
                         }).schedule(new ThreadUtils.MyRunnable() {
                             @Override
                             public Object execute() {
-                                List<AppModel> models = new ArrayList<>();
+                                List<AppInfoDto> models = new ArrayList<>();
                                 for (int i = 10 * page; i < 10 * page + 10; i++) {
-                                    AppModel appModel = new AppModel();
-                                    appModel.appName = "应用名称 " + i;
-                                    appModel.rating = i % 5;
-                                    appModel.appSize = 10 + i;
-                                    appModel.appClassify = "金融理财";
-                                    appModel.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
-                                    appModel.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
-                                    models.add(appModel);
+                                    AppInfoDto appInfoDto = new AppInfoDto();
+                                    appInfoDto.id = i;
+                                    appInfoDto.appName = "应用名称 " + i;
+                                    appInfoDto.rating = i % 5;
+                                    appInfoDto.appSize = 10 + i;
+                                    appInfoDto.appClassify = "金融理财";
+                                    appInfoDto.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
+                                    appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
+                                    models.add(appInfoDto);
                                 }
                                 return models;
                             }
@@ -99,31 +105,68 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onResponse(Object obj) {
                 progressbar.setVisibility(View.GONE);
-                mIndexAdapter.initData(models);
-                mIndexBaseAdapter.initData(models);
+                mIndexAdapter.initData((List<AppInfoDto>) obj);
+                mIndexBaseAdapter.initData((List<AppInfoDto>) obj);
+                updateStatus((List<AppInfoDto>) obj);
             }
         }).schedule(new ThreadUtils.MyRunnable() {
             @Override
             public Object execute() {
-                for (int i = 0; i < 10; i++) {
-                    AppModel appModel = new AppModel();
-                    appModel.appName = "应用名称 " + i;
-                    appModel.rating = i % 5;
-                    appModel.appSize = 10 + i;
-                    appModel.appClassify = "金融理财";
-                    appModel.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
-                    appModel.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
+                List<AppInfoDto> models = new ArrayList<>();
+                for (int i = 1; i < 11; i++) {
+                    AppInfoDto appInfoDto = new AppInfoDto();
+                    appInfoDto.id = i;
+                    appInfoDto.appName = "应用名称 " + i;
+                    appInfoDto.rating = i % 5;
+                    appInfoDto.appSize = 10 + i;
+                    appInfoDto.appClassify = "金融理财";
+                    appInfoDto.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
+                    appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
                     if (i == 1) {
-                        appModel.downloadUrl = "http://imtt.dd.qq.com/16891/110A36BF492C6672528F40A4FFDB22B4.apk";
+                        appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/110A36BF492C6672528F40A4FFDB22B4.apk";
                     }
                     if (i == 2) {
-                        appModel.downloadUrl = "http://imtt.dd.qq.com/16891/3CC768370B43EDF35F56BB3948C77BA8.apk";
+                        appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/3CC768370B43EDF35F56BB3948C77BA8.apk";
                     }
-                    models.add(appModel);
+                    models.add(appInfoDto);
                 }
-                return null;
+                return models;
             }
         }, 1 * 1000, TimeUnit.MILLISECONDS);
+    }
+
+    private void updateStatus(final List<AppInfoDto> appsOfWeb) {
+        ThreadUtils.get(ThreadUtils.Type.CACHED).callBack(new ThreadUtils.CallBack() {
+            @Override
+            public void onResponse(Object obj) {
+                if (obj == null) {
+                    return;
+                }
+                List<Integer> notifyPositions = (List<Integer>) obj;
+                for (int i = 0; i < notifyPositions.size(); i++) {
+                    mIndexAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
+                }
+            }
+        }).run(new ThreadUtils.MyRunnable() {
+            @Override
+            public Object execute() {
+                RealmResults<AppInfoDto> appsOfDb = AppDao.getDownloadedApps();
+                List<Integer> notifyPositions = new ArrayList<>();
+                for (int x = 0; x < appsOfWeb.size(); x++) {
+                    AppInfoDto appOfWeb = appsOfWeb.get(x);
+                    for (int y = 0; y < appsOfDb.size(); y++) {
+                        AppInfoDto appOfDb = appsOfDb.get(y);
+                        if (appOfWeb.id == appOfDb.id
+                                && CommonUtils.isOkFile(appOfDb.localPath, appOfDb.appSize)) {
+                            appOfWeb.downloadStatus = AppInfoDto.DOWNLOADED;
+                            appOfWeb.localPath = appOfDb.localPath;
+                            notifyPositions.add(x);
+                        }
+                    }
+                }
+                return notifyPositions;
+            }
+        });
     }
 
     @Override

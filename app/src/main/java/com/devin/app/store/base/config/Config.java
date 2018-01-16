@@ -11,4 +11,6 @@ public class Config {
      * Okhttp 缓存目录名称
      */
     public static final String OKHTTP_CACHE = "okhttp";
+
+    public static final String REALM_CACHE = "realm";
 }

@@ -10,6 +10,8 @@ import com.devin.app.store.base.utils.Utils;
 
 import java.util.concurrent.TimeUnit;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 
@@ -37,5 +39,10 @@ public class BaseApp extends Application {
                 .readTimeout(30000L, TimeUnit.MILLISECONDS)
                 .build();
         sp = new SPUtils(SP_NAME);
+
+        Realm.init(this);
+
+        Realm.setDefaultConfiguration(new RealmConfiguration.Builder().directory(CommonUtils.getRealmDirectory()).build());
+
     }
 }

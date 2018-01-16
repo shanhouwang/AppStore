@@ -2,8 +2,6 @@ package com.devin.app.store.index;
 
 import android.app.Activity;
 import android.content.Context;
-import android.nfc.Tag;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +10,6 @@ import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
@@ -21,8 +18,7 @@ import com.devin.app.store.base.BaseApp;
 import com.devin.app.store.base.utils.DownloadApkUtils;
 import com.devin.app.store.base.utils.DownloadUtils;
 import com.devin.app.store.base.utils.LogUtils;
-import com.devin.app.store.index.model.AppModel;
-import com.devin.tool_aop.annotation.CatchException;
+import com.devin.app.store.index.model.AppInfoDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,15 +34,15 @@ public class IndexBaseAdapter extends BaseAdapter {
 
     private Context context;
 
-    private List<AppModel> data = new ArrayList<>();
+    private List<AppInfoDto> data = new ArrayList<>();
 
-    public void initData(List<AppModel> data) {
+    public void initData(List<AppInfoDto> data) {
         this.data.clear();
         this.data.addAll(data);
         notifyDataSetChanged();
     }
 
-    public void bindLoadMoreData(List<AppModel> data) {
+    public void bindLoadMoreData(List<AppInfoDto> data) {
         this.data.addAll(data);
         notifyDataSetChanged();
     }
@@ -55,21 +51,21 @@ public class IndexBaseAdapter extends BaseAdapter {
         this.context = context;
     }
 
-    private void setDownloadStatus(final AppModel model, final ViewHolder holder) {
+    private void setDownloadStatus(final AppInfoDto model, final ViewHolder holder) {
         switch (model.downloadStatus) {
-            case AppModel.PREPARE_DOWNLOAD:
+            case AppInfoDto.PREPARE_DOWNLOAD:
                 holder.tv_install.setText("下载");
                 holder.layout_progressbar.setVisibility(View.GONE);
                 holder.layout_install.setBackground(context.getDrawable(R.drawable.index_item_install_bg));
                 holder.tv_install.setTextColor(context.getResources().getColor(R.color._4dbe2e));
                 break;
-            case AppModel.DOWNLOADING:
+            case AppInfoDto.DOWNLOADING:
                 if (holder.layout_progressbar.getVisibility() != View.VISIBLE) {
                     holder.layout_progressbar.setVisibility(View.VISIBLE);
                 }
                 holder.tv_progress.setText(model.downloadProgress + "%");
                 break;
-            case AppModel.DOWNLOADED:
+            case AppInfoDto.DOWNLOADED:
                 holder.layout_progressbar.setVisibility(View.GONE);
                 holder.tv_install.setText("安装");
                 holder.layout_install.setBackground(context.getDrawable(R.drawable.index_item_downloaded_bg));
@@ -117,15 +113,15 @@ public class IndexBaseAdapter extends BaseAdapter {
             view.setTag(vh);
         }
         final ViewHolder holder = (ViewHolder) view.getTag();
-        final AppModel model = data.get(position);
+        final AppInfoDto model = data.get(position);
         holder.tv_app_name.setText(model.appName);
         holder.rating_bar.setRating(model.rating);
         holder.rating_bar.setClickable(false);
         holder.tv_install.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (model.downloadStatus == AppModel.PREPARE_DOWNLOAD) {
-                    model.downloadStatus = AppModel.DOWNLOADING;
+                if (model.downloadStatus == AppInfoDto.PREPARE_DOWNLOAD) {
+                    model.downloadStatus = AppInfoDto.DOWNLOADING;
                     holder.layout_progressbar.setVisibility(View.VISIBLE);
                     DownloadApkUtils
                             .get((Activity) context, new DownloadUtils.DownloadCallBack() {
@@ -146,7 +142,7 @@ public class IndexBaseAdapter extends BaseAdapter {
                                         BaseApp.mHandler.post(new Runnable() {
                                             @Override
                                             public void run() {
-                                                model.downloadStatus = AppModel.DOWNLOADED;
+                                                model.downloadStatus = AppInfoDto.DOWNLOADED;
                                                 model.localPath = bean.path;
                                                 model.downloadProgress = 100;
                                                 context.startActivity(DownloadApkUtils.getIntent(bean.path));
@@ -157,7 +153,7 @@ public class IndexBaseAdapter extends BaseAdapter {
                                 }
                             })
                             .download(model.downloadUrl);
-                } else if (model.downloadStatus == AppModel.DOWNLOADED) {
+                } else if (model.downloadStatus == AppInfoDto.DOWNLOADED) {
                     if (!TextUtils.isEmpty(model.localPath)) {
                         context.startActivity(DownloadApkUtils.getIntent(model.localPath));
                     }

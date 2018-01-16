@@ -10,23 +10,20 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.devin.app.store.R;
 import com.devin.app.store.base.BaseApp;
 import com.devin.app.store.base.utils.DownloadApkUtils;
 import com.devin.app.store.base.utils.DownloadUtils;
-import com.devin.app.store.base.utils.LogUtils;
-import com.devin.app.store.index.model.AppModel;
+import com.devin.app.store.index.model.AppInfoDto;
 import com.devin.tool_aop.annotation.CatchException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.zip.CheckedOutputStream;
+
+import io.realm.Realm;
 
 /**
  * Created by Devin on 2018/1/9.
@@ -39,15 +36,15 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
 
     private Context context;
 
-    private List<AppModel> data = new ArrayList<>();
+    private List<AppInfoDto> data = new ArrayList<>();
 
-    public void initData(List<AppModel> data) {
+    public void initData(List<AppInfoDto> data) {
         this.data.clear();
         this.data.addAll(data);
         notifyDataSetChanged();
     }
 
-    public void bindLoadMoreData(List<AppModel> data) {
+    public void bindLoadMoreData(List<AppInfoDto> data) {
         this.data.addAll(data);
         notifyDataSetChanged();
     }
@@ -64,14 +61,13 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
     @Override
     @CatchException
     public void onBindViewHolder(final ViewHolder holder, final int position) {
-        final AppModel model = data.get(position);
+        final AppInfoDto model = data.get(position);
         holder.tv_app_name.setText(model.appName);
         holder.rating_bar.setRating(model.rating);
         holder.tv_install.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (model.downloadStatus == AppModel.PREPARE_DOWNLOAD) {
-                    model.downloadStatus = AppModel.DOWNLOADING;
+                if (model.downloadStatus == AppInfoDto.PREPARE_DOWNLOAD) {
                     holder.layout_progressbar.setVisibility(View.VISIBLE);
                     DownloadApkUtils
                             .get((Activity) context, new DownloadUtils.DownloadCallBack() {
@@ -83,7 +79,8 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
                                             public void run() {
                                                 int percent = (int) ((double) bean.progressLength / bean.max * 100);
                                                 model.downloadProgress = percent;
-                                                notifyDataSetChanged();
+                                                model.downloadStatus = AppInfoDto.DOWNLOADING;
+                                                notifyItemChanged(position, R.id.tv_progress);
                                             }
                                         });
                                     }
@@ -91,19 +88,29 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
                                         BaseApp.mHandler.post(new Runnable() {
                                             @Override
                                             public void run() {
-                                                model.downloadStatus = AppModel.DOWNLOADED;
+                                                model.downloadStatus = AppInfoDto.DOWNLOADED;
                                                 model.localPath = bean.path;
                                                 model.downloadProgress = 100;
                                                 holder.layout_progressbar.setVisibility(View.GONE);
                                                 context.startActivity(DownloadApkUtils.getIntent(bean.path));
-                                                notifyDataSetChanged();
+                                                notifyItemChanged(position);
+                                            }
+                                        });
+
+                                        Realm.getDefaultInstance().executeTransaction(new Realm.Transaction() {
+                                            @Override
+                                            public void execute(Realm realm) {
+                                                AppInfoDto app = realm.createObject(AppInfoDto.class, model.id);
+                                                app.localPath = bean.path;
+                                                app.downloadStatus = AppInfoDto.DOWNLOADED;
+                                                app.appSize = bean.max;
                                             }
                                         });
                                     }
                                 }
                             })
                             .download(model.downloadUrl);
-                } else if (model.downloadStatus == AppModel.DOWNLOADED) {
+                } else if (model.downloadStatus == AppInfoDto.DOWNLOADED) {
                     if (!TextUtils.isEmpty(model.localPath)) {
                         context.startActivity(DownloadApkUtils.getIntent(model.localPath));
                     }
@@ -120,21 +127,21 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
         return data.size();
     }
 
-    private void setDownloadStatus(final AppModel model, final ViewHolder holder) {
+    private void setDownloadStatus(final AppInfoDto model, final ViewHolder holder) {
         switch (model.downloadStatus) {
-            case AppModel.PREPARE_DOWNLOAD:
+            case AppInfoDto.PREPARE_DOWNLOAD:
                 holder.tv_install.setText("下载");
                 holder.layout_progressbar.setVisibility(View.GONE);
                 holder.layout_install.setBackground(context.getDrawable(R.drawable.index_item_install_bg));
                 holder.tv_install.setTextColor(context.getResources().getColor(R.color._4dbe2e));
                 break;
-            case AppModel.DOWNLOADING:
+            case AppInfoDto.DOWNLOADING:
                 if (holder.layout_progressbar.getVisibility() != View.VISIBLE) {
                     holder.layout_progressbar.setVisibility(View.VISIBLE);
                 }
                 holder.tv_progress.setText(model.downloadProgress + "%");
                 break;
-            case AppModel.DOWNLOADED:
+            case AppInfoDto.DOWNLOADED:
                 holder.layout_progressbar.setVisibility(View.GONE);
                 holder.tv_install.setText("安装");
                 holder.layout_install.setBackground(context.getDrawable(R.drawable.index_item_downloaded_bg));
@@ -147,17 +154,6 @@ public class IndexAdapter extends RecyclerView.Adapter<IndexAdapter.ViewHolder> 
                 holder.tv_install.setText("下载");
                 break;
         }
-    }
-
-    class DownloadTagModel {
-
-        public DownloadTagModel(View v, int position) {
-            this.v = v;
-            this.position = position;
-        }
-
-        View v;
-        int position;
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {

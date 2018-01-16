@@ -47,7 +47,7 @@
             style="@style/My_RatingBar"
             android:layout_width="wrap_content"
             android:layout_height="10dp"
-            android:clickable="false" />
+            android:isIndicator="true" />
 
         <TextView
             android:id="@+id/tv_classify_name"
