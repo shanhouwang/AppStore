@@ -1,5 +1,6 @@
 package com.devin.app.store.index;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -11,6 +12,7 @@ import android.widget.ProgressBar;
 import com.devin.app.store.R;
 import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.ThreadUtils;
+import com.devin.app.store.index.activity.SearchActivity;
 import com.devin.app.store.index.dao.AppDao;
 import com.devin.app.store.index.model.AppInfoDto;
 import com.devin.refreshview.MarsRefreshView;
@@ -180,6 +182,8 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.layout_search:
+                Intent i = new Intent(getContext(), SearchActivity.class);
+                startActivity(i);
                 break;
         }
     }

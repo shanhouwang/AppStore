@@ -29,7 +29,7 @@
         android:layout_toRightOf="@+id/iv_app_cover"
         android:text="应用名字"
         android:textColor="@color/module_base_333333"
-        android:textSize="13dp" />
+        android:textSize="16dp" />
 
     <LinearLayout
         android:id="@+id/layout"

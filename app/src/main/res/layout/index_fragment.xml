@@ -6,24 +6,29 @@
     android:background="@color/_ffffff"
     android:orientation="vertical"
     android:paddingLeft="15dp"
-    android:paddingRight="15dp"
-    android:paddingTop="15dp">
+    android:paddingRight="15dp">
 
     <LinearLayout
         android:id="@+id/layout_search"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
+        android:layout_height="48dp"
         android:background="@drawable/index_search_bg"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:src="@drawable/ic_search" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="15dp"
+            android:layout_marginLeft="10dp"
             android:text="请输入搜索关键字"
             android:textColor="#999999"
-            android:textSize="14dp" />
+            android:textSize="16dp" />
 
     </LinearLayout>
 
