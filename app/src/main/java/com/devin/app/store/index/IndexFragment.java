@@ -12,9 +12,9 @@ import android.widget.ProgressBar;
 import com.devin.app.store.R;
 import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.ThreadUtils;
-import com.devin.app.store.index.activity.SearchActivity;
 import com.devin.app.store.index.dao.AppDao;
 import com.devin.app.store.index.model.AppInfoDto;
+import com.devin.app.store.search.SearchActivity;
 import com.devin.refreshview.MarsRefreshView;
 import com.devin.refreshview.MercuryOnLoadMoreListener;
 
