@@ -122,6 +122,25 @@ public class CommonUtils {
     }
 
     /**
+     * @param et
+     * @return
+     */
+    public static boolean hideSoftKeyboard(View et) {
+        if (mInputMethodManager == null) {
+            mInputMethodManager = (InputMethodManager) BaseApp.app.getSystemService(Context.INPUT_METHOD_SERVICE);
+        }
+        if (mInputMethodManager.isActive()) {
+            try {
+                mInputMethodManager.hideSoftInputFromWindow(et.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+            } catch (Exception e) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * 判断文件存在否、被损坏否
      *
      * @param path

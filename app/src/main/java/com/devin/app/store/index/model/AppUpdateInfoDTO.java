@@ -7,7 +7,7 @@ import io.realm.annotations.PrimaryKey;
  * Created by Devin on 2018/1/11.
  */
 
-public class AppUpdateInfoDto extends RealmObject {
+public class AppUpdateInfoDTO extends RealmObject {
 
     @PrimaryKey
     public int id;

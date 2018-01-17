@@ -12,8 +12,8 @@ import android.widget.ProgressBar;
 import com.devin.app.store.R;
 import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.ThreadUtils;
-import com.devin.app.store.index.dao.AppDao;
-import com.devin.app.store.index.model.AppInfoDto;
+import com.devin.app.store.index.dao.AppDAO;
+import com.devin.app.store.index.model.AppInfoDTO;
 import com.devin.app.store.search.SearchActivity;
 import com.devin.refreshview.MarsRefreshView;
 import com.devin.refreshview.MercuryOnLoadMoreListener;
@@ -51,24 +51,22 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onResume() {
         super.onResume();
-        mIndexAdapter.notifyItemChanged(IndexAdapter.CLICK_POSITION, R.id.tv_install);
+        mAppListAdapter.notifyItemChanged(AppListAdapter.CLICK_POSITION, R.id.tv_install);
     }
 
     private MarsRefreshView mMarsRefreshView;
     private ProgressBar progressbar;
-    private IndexAdapter mIndexAdapter;
-    private IndexBaseAdapter mIndexBaseAdapter;
+    private AppListAdapter mAppListAdapter;
 
     private void initView(View v) {
         v.findViewById(R.id.layout_search).setOnClickListener(this);
         mMarsRefreshView = v.findViewById(R.id.marsRefreshView);
         progressbar = v.findViewById(R.id.progressbar);
-        mIndexAdapter = new IndexAdapter(getContext());
-        mIndexBaseAdapter = new IndexBaseAdapter(getContext());
+        mAppListAdapter = new AppListAdapter(getContext());
 
         mMarsRefreshView
                 .setLinearLayoutManager()
-                .setAdapter(mIndexAdapter)
+                .setAdapter(mAppListAdapter)
                 .setMercuryOnLoadMoreListener(1, new MercuryOnLoadMoreListener() {
                     @Override
                     public void onLoadMore(final int page) {
@@ -79,23 +77,22 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                         ThreadUtils.get(ThreadUtils.Type.SCHEDULED).callBack(new ThreadUtils.CallBack() {
                             @Override
                             public void onResponse(Object obj) {
-                                mIndexAdapter.bindLoadMoreData((List<AppInfoDto>) obj);
-                                mIndexBaseAdapter.bindLoadMoreData((List<AppInfoDto>) obj);
+                                mAppListAdapter.bindLoadMoreData((List<AppInfoDTO>) obj);
                             }
                         }).schedule(new ThreadUtils.MyRunnable() {
                             @Override
                             public Object execute() {
-                                List<AppInfoDto> models = new ArrayList<>();
+                                List<AppInfoDTO> models = new ArrayList<>();
                                 for (int i = 10 * page; i < 10 * page + 10; i++) {
-                                    AppInfoDto appInfoDto = new AppInfoDto();
-                                    appInfoDto.id = i;
-                                    appInfoDto.appName = "应用名称 " + i;
-                                    appInfoDto.rating = i % 5;
-                                    appInfoDto.appSize = 10 + i;
-                                    appInfoDto.appClassify = "金融理财";
-                                    appInfoDto.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
-                                    appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
-                                    models.add(appInfoDto);
+                                    AppInfoDTO appInfoDTO = new AppInfoDTO();
+                                    appInfoDTO.id = i;
+                                    appInfoDTO.appName = "应用名称 " + i;
+                                    appInfoDTO.rating = i % 5;
+                                    appInfoDTO.appSize = 10 + i;
+                                    appInfoDTO.appClassify = "金融理财";
+                                    appInfoDTO.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
+                                    appInfoDTO.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
+                                    models.add(appInfoDTO);
                                 }
                                 return models;
                             }
@@ -112,39 +109,38 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onResponse(Object obj) {
                 progressbar.setVisibility(View.GONE);
-                mIndexAdapter.initData((List<AppInfoDto>) obj);
-                mIndexBaseAdapter.initData((List<AppInfoDto>) obj);
-                updateStatus((List<AppInfoDto>) obj);
+                mAppListAdapter.initData((List<AppInfoDTO>) obj);
+                updateStatus((List<AppInfoDTO>) obj);
             }
         }).schedule(new ThreadUtils.MyRunnable() {
             @Override
             public Object execute() {
-                List<AppInfoDto> models = new ArrayList<>();
+                List<AppInfoDTO> models = new ArrayList<>();
                 for (int i = 1; i < 11; i++) {
-                    AppInfoDto appInfoDto = new AppInfoDto();
-                    appInfoDto.id = i;
-                    appInfoDto.appName = "应用名称 " + i;
-                    appInfoDto.rating = i % 5;
-                    appInfoDto.appSize = 10 + i;
-                    appInfoDto.appClassify = "金融理财";
-                    appInfoDto.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
-                    appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
+                    AppInfoDTO appInfoDTO = new AppInfoDTO();
+                    appInfoDTO.id = i;
+                    appInfoDTO.appName = "应用名称 " + i;
+                    appInfoDTO.rating = i % 5;
+                    appInfoDTO.appSize = 10 + i;
+                    appInfoDTO.appClassify = "金融理财";
+                    appInfoDTO.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
+                    appInfoDTO.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
                     if (i == 1) {
-                        appInfoDto.packageName = "com.tencent.qqlive";
-                        appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/110A36BF492C6672528F40A4FFDB22B4.apk";
+                        appInfoDTO.packageName = "com.tencent.qqlive";
+                        appInfoDTO.downloadUrl = "http://imtt.dd.qq.com/16891/110A36BF492C6672528F40A4FFDB22B4.apk";
                     }
                     if (i == 2) {
-                        appInfoDto.packageName = "com.cleanmaster.mguard_cn";
-                        appInfoDto.downloadUrl = "http://imtt.dd.qq.com/16891/3CC768370B43EDF35F56BB3948C77BA8.apk";
+                        appInfoDTO.packageName = "com.cleanmaster.mguard_cn";
+                        appInfoDTO.downloadUrl = "http://imtt.dd.qq.com/16891/3CC768370B43EDF35F56BB3948C77BA8.apk";
                     }
-                    models.add(appInfoDto);
+                    models.add(appInfoDTO);
                 }
                 return models;
             }
         }, 1 * 1000, TimeUnit.MILLISECONDS);
     }
 
-    private void updateStatus(final List<AppInfoDto> appsOfWeb) {
+    private void updateStatus(final List<AppInfoDTO> appsOfWeb) {
         ThreadUtils.get(ThreadUtils.Type.CACHED).callBack(new ThreadUtils.CallBack() {
             @Override
             public void onResponse(Object obj) {
@@ -153,21 +149,21 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                 }
                 List<Integer> notifyPositions = (List<Integer>) obj;
                 for (int i = 0; i < notifyPositions.size(); i++) {
-                    mIndexAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
+                    mAppListAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
                 }
             }
         }).run(new ThreadUtils.MyRunnable() {
             @Override
             public Object execute() {
-                RealmResults<AppInfoDto> appsOfDb = AppDao.getDownloadedApps();
+                RealmResults<AppInfoDTO> appsOfDb = AppDAO.getDownloadedApps();
                 List<Integer> notifyPositions = new ArrayList<>();
                 for (int x = 0; x < appsOfWeb.size(); x++) {
-                    AppInfoDto appOfWeb = appsOfWeb.get(x);
+                    AppInfoDTO appOfWeb = appsOfWeb.get(x);
                     for (int y = 0; y < appsOfDb.size(); y++) {
-                        AppInfoDto appOfDb = appsOfDb.get(y);
+                        AppInfoDTO appOfDb = appsOfDb.get(y);
                         if (appOfWeb.id == appOfDb.id
                                 && CommonUtils.isOkFile(appOfDb.localPath, appOfDb.appSize)) {
-                            appOfWeb.downloadStatus = AppInfoDto.DOWNLOADED;
+                            appOfWeb.downloadStatus = AppInfoDTO.DOWNLOADED;
                             appOfWeb.localPath = appOfDb.localPath;
                             notifyPositions.add(x);
                         }
