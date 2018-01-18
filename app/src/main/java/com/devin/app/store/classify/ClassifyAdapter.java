@@ -54,7 +54,7 @@ public class ClassifyAdapter extends RecyclerView.Adapter<ClassifyAdapter.ViewHo
         holder.init();
         holder.set(model.secondClassify);
         holder.tv_classify_name.setText(model.name);
-        holder.tv_classify_name.setCompoundDrawablesWithIntrinsicBounds(null, context.getDrawable(model.imgUrl), null, null);
+        holder.tv_classify_name.setCompoundDrawablesWithIntrinsicBounds(null, context.getResources().getDrawable(model.imgUrl), null, null);
         holder.tv_classify_name.setOnClickListener(v -> {
             Intent i = new Intent(context, AppListActivity.class);
             i.putExtra(AppListActivity.KEY_TITLE, model.name);
@@ -62,9 +62,9 @@ public class ClassifyAdapter extends RecyclerView.Adapter<ClassifyAdapter.ViewHo
         });
 
         if (position % DIVISOR == 0) {
-            holder.v.setBackgroundColor(context.getResources().getColor(R.color._ffffff));
+            holder.v.setBackground(context.getResources().getDrawable(R.drawable.classify_item_bg_even));
         } else {
-            holder.v.setBackgroundColor(context.getResources().getColor(R.color._e8ebed));
+            holder.v.setBackground(context.getResources().getDrawable(R.drawable.classify_item_bg_radix));
         }
 
     }
