@@ -29,6 +29,8 @@ public class SearchRecommAdapter extends RecyclerView.Adapter<SearchRecommAdapte
 
     private List<RecommandModel> data = new ArrayList<>();
 
+    private Realm realm;
+
     public void initData(List<RecommandModel> data) {
         this.data.clear();
         this.data.addAll(data);
@@ -40,8 +42,9 @@ public class SearchRecommAdapter extends RecyclerView.Adapter<SearchRecommAdapte
         notifyDataSetChanged();
     }
 
-    public SearchRecommAdapter(SearchActivity context) {
+    public SearchRecommAdapter(SearchActivity context, Realm realm) {
         this.context = context;
+        this.realm = realm;
     }
 
     @Override
@@ -59,19 +62,14 @@ public class SearchRecommAdapter extends RecyclerView.Adapter<SearchRecommAdapte
         } else {
             holder.tv_recommend.setCompoundDrawablesWithIntrinsicBounds(null, null, context.getDrawable(R.drawable.ic_search), null);
         }
-        holder.v.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                context.changeAppListAdapter();
-                if (null == SearchDAO.getByKeyWord(model.keyword)) {
-                    RealmUtils.create(new Realm.Transaction() {
-                        @Override
-                        public void execute(Realm realm) {
-                            SearchHistoryDTO dto = realm.createObject(SearchHistoryDTO.class);
-                            dto.keyWord = model.keyword;
-                        }
-                    });
-                }
+        holder.v.setOnClickListener(v -> {
+            context.changeAppListAdapter();
+            context.setEditText(model.keyword);
+            if (null == SearchDAO.getByKeyWord(realm, model.keyword)) {
+                realm.executeTransaction(realm -> {
+                    SearchHistoryDTO dto = realm.createObject(SearchHistoryDTO.class);
+                    dto.keyWord = model.keyword;
+                });
             }
         });
     }

@@ -16,11 +16,11 @@ public class SearchDAO {
      *
      * @return
      */
-    public static RealmResults<SearchHistoryDTO> getHistory() {
-        return Realm.getDefaultInstance().where(SearchHistoryDTO.class).findAll();
+    public static RealmResults<SearchHistoryDTO> getHistory(Realm realm) {
+        return realm.where(SearchHistoryDTO.class).findAll();
     }
 
-    public static SearchHistoryDTO getByKeyWord(String keyWord) {
-        return Realm.getDefaultInstance().where(SearchHistoryDTO.class).equalTo("keyWord", keyWord).findFirst();
+    public static SearchHistoryDTO getByKeyWord(Realm realm, String keyWord) {
+        return realm.where(SearchHistoryDTO.class).equalTo("keyWord", keyWord).findFirst();
     }
 }
