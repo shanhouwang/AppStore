@@ -140,6 +140,7 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
                             appInfoDTO.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
                             models.add(appInfoDTO);
                         }
+                        emitter.onNext(models);
                     }).delay(1000, TimeUnit.MILLISECONDS)
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
@@ -200,6 +201,7 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
                         }
                     }
                 }
+                emitter.onNext(notifyPositions);
             }).subscribe(notifyPositions -> {
                 for (int i = 0; i < notifyPositions.size(); i++) {
                     mAppListAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);

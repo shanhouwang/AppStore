@@ -168,6 +168,7 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                         }
                     }
                 }
+                emitter.onNext(notifyPositions);
             }).subscribe(notifyPositions -> {
                         for (int i = 0; i < notifyPositions.size(); i++) {
                             mAppListAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
