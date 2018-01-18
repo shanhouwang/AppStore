@@ -1,5 +1,6 @@
 package com.devin.app.store.search;
 
+import android.os.SystemClock;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.devin.app.store.R;
-import com.devin.app.store.base.utils.RealmUtils;
 import com.devin.app.store.search.dao.SearchDAO;
 import com.devin.app.store.search.model.RecommandModel;
 import com.devin.app.store.search.model.SearchHistoryDTO;
@@ -64,11 +64,12 @@ public class SearchRecommAdapter extends RecyclerView.Adapter<SearchRecommAdapte
         }
         holder.v.setOnClickListener(v -> {
             context.changeAppListAdapter();
-            context.setEditText(model.keyword);
+            context.setEditTextHint(model.keyword);
             if (null == SearchDAO.getByKeyWord(realm, model.keyword)) {
                 realm.executeTransaction(realm -> {
                     SearchHistoryDTO dto = realm.createObject(SearchHistoryDTO.class);
                     dto.keyWord = model.keyword;
+                    dto.time = System.currentTimeMillis();
                 });
             }
         });

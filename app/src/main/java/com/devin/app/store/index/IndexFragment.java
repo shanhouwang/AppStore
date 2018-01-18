@@ -22,6 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableSource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
+import io.realm.Realm;
+import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 
 /**
@@ -31,9 +39,18 @@ import io.realm.RealmResults;
  */
 public class IndexFragment extends Fragment implements View.OnClickListener {
 
+    private Realm realm;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        realm = Realm.getDefaultInstance();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        realm.close();
     }
 
     @Nullable
@@ -141,21 +158,8 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
     }
 
     private void updateStatus(final List<AppInfoDTO> appsOfWeb) {
-        ThreadUtils.get(ThreadUtils.Type.CACHED).callBack(new ThreadUtils.CallBack() {
-            @Override
-            public void onResponse(Object obj) {
-                if (obj == null) {
-                    return;
-                }
-                List<Integer> notifyPositions = (List<Integer>) obj;
-                for (int i = 0; i < notifyPositions.size(); i++) {
-                    mAppListAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
-                }
-            }
-        }).run(new ThreadUtils.MyRunnable() {
-            @Override
-            public Object execute() {
-                RealmResults<AppInfoDTO> appsOfDb = AppDAO.getDownloadedApps();
+        AppDAO.getDownloadedApps(realm, (RealmResults<AppInfoDTO> appsOfDb) -> {
+            Observable.create((ObservableEmitter<List<Integer>> emitter) -> {
                 List<Integer> notifyPositions = new ArrayList<>();
                 for (int x = 0; x < appsOfWeb.size(); x++) {
                     AppInfoDTO appOfWeb = appsOfWeb.get(x);
@@ -169,8 +173,11 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                         }
                     }
                 }
-                return notifyPositions;
-            }
+            }).subscribe(notifyPositions -> {
+                        for (int i = 0; i < notifyPositions.size(); i++) {
+                            mAppListAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
+                        }
+                    });
         });
     }
 

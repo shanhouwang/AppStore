@@ -12,9 +12,6 @@ import android.widget.EditText;
 import com.devin.app.store.R;
 import com.devin.app.store.base.BaseActivity;
 import com.devin.app.store.base.utils.CommonUtils;
-import com.devin.app.store.base.utils.LogUtils;
-import com.devin.app.store.base.utils.RealmUtils;
-import com.devin.app.store.base.utils.ThreadUtils;
 import com.devin.app.store.index.AppListAdapter;
 import com.devin.app.store.index.dao.AppDAO;
 import com.devin.app.store.index.model.AppInfoDTO;
@@ -22,7 +19,6 @@ import com.devin.app.store.search.dao.SearchDAO;
 import com.devin.app.store.search.model.RecommandModel;
 import com.devin.app.store.search.model.SearchHistoryDTO;
 import com.devin.refreshview.MarsRefreshView;
-import com.devin.refreshview.MercuryOnLoadMoreListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import io.realm.Realm;
 import io.realm.RealmResults;
@@ -57,8 +50,8 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
     private void initView() {
         findViewById(R.id.iv_back).setOnClickListener(this);
         mMarsRefreshView = findViewById(R.id.marsRefreshView);
-        et_search = findViewById(R.id.et_search);
-        et_search.addTextChangedListener(new TextWatcher() {
+        mEtSearch = findViewById(R.id.et_search);
+        mEtSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -71,10 +64,10 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
             public void afterTextChanged(Editable s) {
                 changeSearchRecommAdapter();
                 List<RecommandModel> data = new ArrayList<>();
-                if (!TextUtils.isEmpty(et_search.getText().toString().trim())) {
+                if (!TextUtils.isEmpty(mEtSearch.getText().toString().trim())) {
                     for (int i = 0; i < 10; i++) {
                         RecommandModel model = new RecommandModel();
-                        model.keyword = et_search.getText().toString().trim();
+                        model.keyword = mEtSearch.getText().toString().trim();
                         data.add(model);
                     }
                     mSearchRecommAdapter.initData(data);
@@ -85,15 +78,16 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
             }
         });
 
-        et_search.setOnKeyListener((v, keyCode, event) -> {
-            final String keyword = et_search.getText().toString().trim();
+        mEtSearch.setOnKeyListener((v, keyCode, event) -> {
+            final String keyword = mEtSearch.getText().toString().trim();
             if (keyCode == KeyEvent.KEYCODE_ENTER && !TextUtils.isEmpty(keyword)) {
-                CommonUtils.hideSoftKeyboard(et_search);
+                CommonUtils.hideSoftKeyboard(mEtSearch);
                 changeAppListAdapter();
                 if (null == SearchDAO.getByKeyWord(mRealm, keyword)) {
                     mRealm.executeTransaction(realm -> {
                         SearchHistoryDTO dto = realm.createObject(SearchHistoryDTO.class);
                         dto.keyWord = keyword;
+                        dto.time = System.currentTimeMillis();
                     });
                 }
             }
@@ -106,7 +100,7 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
     }
 
     private MarsRefreshView mMarsRefreshView;
-    private EditText et_search;
+    private EditText mEtSearch;
     private SearchRecommAdapter mSearchRecommAdapter;
     private AppListAdapter mAppListAdapter;
 
@@ -118,8 +112,8 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
                 .setAdapter(mSearchRecommAdapter);
     }
 
-    public void setEditText(String keyword) {
-        et_search.setText(keyword);
+    public void setEditTextHint(String keyword) {
+        mEtSearch.setHint(keyword);
     }
 
     /**
@@ -191,30 +185,27 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
     }
 
     private void updateStatus(final List<AppInfoDTO> appsOfWeb) {
-        Observable.create((ObservableEmitter<List<Integer>> emitter) -> {
-            RealmResults<AppInfoDTO> appsOfDb = AppDAO.getDownloadedApps();
-            List<Integer> notifyPositions = new ArrayList<>();
-            for (int x = 0; x < appsOfWeb.size(); x++) {
-                AppInfoDTO appOfWeb = appsOfWeb.get(x);
-                for (int y = 0; y < appsOfDb.size(); y++) {
-                    AppInfoDTO appOfDb = appsOfDb.get(y);
-                    if (appOfWeb.id == appOfDb.id
-                            && CommonUtils.isOkFile(appOfDb.localPath, appOfDb.appSize)) {
-                        appOfWeb.downloadStatus = AppInfoDTO.DOWNLOADED;
-                        appOfWeb.localPath = appOfDb.localPath;
-                        notifyPositions.add(x);
+        AppDAO.getDownloadedApps(mRealm, (RealmResults<AppInfoDTO> appsOfDb) -> {
+            Observable.create((ObservableEmitter<List<Integer>> emitter) -> {
+                List<Integer> notifyPositions = new ArrayList<>();
+                for (int x = 0; x < appsOfWeb.size(); x++) {
+                    AppInfoDTO appOfWeb = appsOfWeb.get(x);
+                    for (int y = 0; y < appsOfDb.size(); y++) {
+                        AppInfoDTO appOfDb = appsOfDb.get(y);
+                        if (appOfWeb.id == appOfDb.id
+                                && CommonUtils.isOkFile(appOfDb.localPath, appOfDb.appSize)) {
+                            appOfWeb.downloadStatus = AppInfoDTO.DOWNLOADED;
+                            appOfWeb.localPath = appOfDb.localPath;
+                            notifyPositions.add(x);
+                        }
                     }
                 }
-            }
-            emitter.onNext(notifyPositions);
-        })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(notifyPositions -> {
-                    for (int i = 0; i < notifyPositions.size(); i++) {
-                        mAppListAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
-                    }
-                });
+            }).subscribe(notifyPositions -> {
+                for (int i = 0; i < notifyPositions.size(); i++) {
+                    mAppListAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
+                }
+            });
+        });
     }
 
     private void initHistoryData() {
