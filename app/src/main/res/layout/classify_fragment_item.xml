@@ -14,7 +14,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawableTop="@drawable/ic_office"
-            android:padding="20dp"
+            android:padding="15dp"
             android:text="影音视听"
             android:textColor="#333333"
             android:textSize="16dp" />
@@ -42,41 +42,32 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="center"
+                    android:ellipsize="end"
+                    android:gravity="center_horizontal|bottom"
+                    android:lines="1"
+                    android:paddingBottom="7.5dp"
                     android:text="影音视听"
                     android:textColor="#666666"
                     android:textSize="15dp" />
-
-                <View
-                    android:layout_width="0.5dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="20dp"
-                    android:layout_marginTop="20dp"
-                    android:background="#d3d3d3" />
 
                 <TextView
                     android:id="@+id/tv_second_classify_2"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="center"
+                    android:gravity="center_horizontal|bottom"
+                    android:paddingBottom="7.5dp"
                     android:text="影音视听"
                     android:textColor="#666666"
                     android:textSize="15dp" />
-
-                <View
-                    android:layout_width="0.5dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="20dp"
-                    android:layout_marginTop="20dp"
-                    android:background="#d3d3d3" />
 
                 <TextView
                     android:id="@+id/tv_second_classify_3"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="center"
+                    android:gravity="center_horizontal|bottom"
+                    android:paddingBottom="7.5dp"
                     android:text="影音视听"
                     android:textColor="#666666"
                     android:textSize="15dp" />
@@ -93,41 +84,30 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="center"
+                    android:gravity="center_horizontal|top"
+                    android:paddingTop="7.5dp"
                     android:text="影音视听"
                     android:textColor="#666666"
                     android:textSize="15dp" />
-
-                <View
-                    android:layout_width="0.5dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="20dp"
-                    android:layout_marginTop="20dp"
-                    android:background="#d3d3d3" />
 
                 <TextView
                     android:id="@+id/tv_second_classify_5"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="center"
+                    android:gravity="center_horizontal|top"
+                    android:paddingTop="7.5dp"
                     android:text="影音视听"
                     android:textColor="#666666"
                     android:textSize="15dp" />
-
-                <View
-                    android:layout_width="0.5dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="20dp"
-                    android:layout_marginTop="20dp"
-                    android:background="#d3d3d3" />
 
                 <TextView
                     android:id="@+id/tv_second_classify_6"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="center"
+                    android:gravity="center_horizontal|top"
+                    android:paddingTop="7.5dp"
                     android:text="影音视听"
                     android:textColor="#666666"
                     android:textSize="15dp" />
@@ -135,9 +115,4 @@
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="10dp"
-        android:background="#e8e8e8" />
 </LinearLayout>

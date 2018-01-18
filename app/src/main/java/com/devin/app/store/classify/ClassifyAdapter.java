@@ -26,6 +26,8 @@ public class ClassifyAdapter extends RecyclerView.Adapter<ClassifyAdapter.ViewHo
 
     private static final int SECOND_AMOUNT = 6;
 
+    private static final int DIVISOR = 2;
+
     private Context context;
 
     private List<ClassifyModel> data = new ArrayList<>();
@@ -59,6 +61,11 @@ public class ClassifyAdapter extends RecyclerView.Adapter<ClassifyAdapter.ViewHo
             context.startActivity(i);
         });
 
+        if (position % DIVISOR == 0) {
+            holder.v.setBackgroundColor(context.getResources().getColor(R.color._ffffff));
+        } else {
+            holder.v.setBackgroundColor(context.getResources().getColor(R.color._e8ebed));
+        }
 
     }
 
@@ -68,6 +75,8 @@ public class ClassifyAdapter extends RecyclerView.Adapter<ClassifyAdapter.ViewHo
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
+
+        View v;
 
         TextView tv_classify_name;
         TextView tv_second_classify_1;
@@ -81,6 +90,7 @@ public class ClassifyAdapter extends RecyclerView.Adapter<ClassifyAdapter.ViewHo
 
         public ViewHolder(View itemView) {
             super(itemView);
+            v = itemView;
             tv_classify_name = itemView.findViewById(R.id.tv_classify_name);
             seconds = new ArrayList<>();
             tv_second_classify_1 = itemView.findViewById(R.id.tv_second_classify_1);
