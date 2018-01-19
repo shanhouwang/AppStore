@@ -16,7 +16,7 @@ import com.devin.app.store.index.AppListAdapter;
 import com.devin.app.store.index.dao.AppDAO;
 import com.devin.app.store.index.model.AppInfoDTO;
 import com.devin.app.store.search.dao.SearchDAO;
-import com.devin.app.store.search.model.RecommandModel;
+import com.devin.app.store.search.model.RecommendModel;
 import com.devin.app.store.search.model.SearchHistoryDTO;
 import com.devin.refreshview.MarsRefreshView;
 
@@ -63,10 +63,10 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
             @Override
             public void afterTextChanged(Editable s) {
                 changeSearchRecommAdapter();
-                List<RecommandModel> data = new ArrayList<>();
+                List<RecommendModel> data = new ArrayList<>();
                 if (!TextUtils.isEmpty(mEtSearch.getText().toString().trim())) {
                     for (int i = 0; i < 10; i++) {
-                        RecommandModel model = new RecommandModel();
+                        RecommendModel model = new RecommendModel();
                         model.keyword = mEtSearch.getText().toString().trim();
                         data.add(model);
                     }
@@ -141,12 +141,11 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
                             models.add(appInfoDTO);
                         }
                         emitter.onNext(models);
-                    }).delay(1000, TimeUnit.MILLISECONDS)
+                    })
+                            .delay(1000, TimeUnit.MILLISECONDS)
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(models -> {
-                                mAppListAdapter.bindLoadMoreData(models);
-                            });
+                            .subscribe(models -> mAppListAdapter.bindLoadMoreData(models));
                 });
         initAppsData();
     }
@@ -202,20 +201,18 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
                     }
                 }
                 emitter.onNext(notifyPositions);
-            }).subscribe(notifyPositions -> {
-                for (int i = 0; i < notifyPositions.size(); i++) {
-                    mAppListAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
-                }
-            });
+            })
+                    .flatMap((List<Integer> integers) -> Observable.fromIterable(integers))
+                    .subscribe(position -> mAppListAdapter.notifyItemChanged(position, R.id.tv_install));
         });
     }
 
     private void initHistoryData() {
         Observable.just(SearchDAO.getHistory(mRealm))
                 .map(searchHistory -> {
-                    List<RecommandModel> history = new ArrayList<>();
+                    List<RecommendModel> history = new ArrayList<>();
                     for (int i = 0; i < searchHistory.size(); i++) {
-                        RecommandModel model = new RecommandModel();
+                        RecommendModel model = new RecommendModel();
                         model.keyword = searchHistory.get(i).keyWord;
                         model.formHistory = true;
                         history.add(model);

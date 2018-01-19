@@ -28,9 +28,10 @@ import io.realm.Realm;
 import io.realm.RealmResults;
 
 /**
- * Created by Devin on 2018/1/9.
- * <p>
  * 推荐页面
+ * <p>
+ *
+ * @author Devin
  */
 public class IndexFragment extends Fragment implements View.OnClickListener {
 
@@ -169,11 +170,9 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                     }
                 }
                 emitter.onNext(notifyPositions);
-            }).subscribe(notifyPositions -> {
-                        for (int i = 0; i < notifyPositions.size(); i++) {
-                            mAppListAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
-                        }
-                    });
+            })
+                    .flatMap((List<Integer> positions) -> Observable.fromIterable(positions))
+                    .subscribe(position -> mAppListAdapter.notifyItemChanged(position, R.id.tv_install));
         });
     }
 

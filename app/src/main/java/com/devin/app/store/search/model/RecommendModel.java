@@ -4,7 +4,7 @@ package com.devin.app.store.search.model;
  * Created by Devin on 2018/1/17.
  */
 
-public class RecommandModel {
+public class RecommendModel {
 
     public String keyword;
 

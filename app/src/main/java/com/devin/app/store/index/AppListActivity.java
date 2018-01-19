@@ -142,11 +142,9 @@ public class AppListActivity extends BaseActivity {
                     }
                 }
                 emitter.onNext(notifyPositions);
-            }).subscribe(notifyPositions -> {
-                for (int i = 0; i < notifyPositions.size(); i++) {
-                    mAppListAdapter.notifyItemChanged(notifyPositions.get(i), R.id.tv_install);
-                }
-            });
+            })
+                    .flatMap((List<Integer> notifyPositions) -> Observable.fromIterable(notifyPositions))
+                    .subscribe(notifyPosition -> mAppListAdapter.notifyItemChanged(notifyPosition, R.id.tv_install));
         });
     }
 }

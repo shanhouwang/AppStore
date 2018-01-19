@@ -1,6 +1,5 @@
 package com.devin.app.store.search;
 
-import android.os.SystemClock;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,7 +8,7 @@ import android.widget.TextView;
 
 import com.devin.app.store.R;
 import com.devin.app.store.search.dao.SearchDAO;
-import com.devin.app.store.search.model.RecommandModel;
+import com.devin.app.store.search.model.RecommendModel;
 import com.devin.app.store.search.model.SearchHistoryDTO;
 import com.devin.tool_aop.annotation.CatchException;
 
@@ -27,17 +26,17 @@ public class SearchRecommAdapter extends RecyclerView.Adapter<SearchRecommAdapte
 
     private SearchActivity context;
 
-    private List<RecommandModel> data = new ArrayList<>();
+    private List<RecommendModel> data = new ArrayList<>();
 
     private Realm realm;
 
-    public void initData(List<RecommandModel> data) {
+    public void initData(List<RecommendModel> data) {
         this.data.clear();
         this.data.addAll(data);
         notifyDataSetChanged();
     }
 
-    public void bindLoadMoreData(List<RecommandModel> data) {
+    public void bindLoadMoreData(List<RecommendModel> data) {
         this.data.addAll(data);
         notifyDataSetChanged();
     }
@@ -55,7 +54,7 @@ public class SearchRecommAdapter extends RecyclerView.Adapter<SearchRecommAdapte
     @Override
     @CatchException
     public void onBindViewHolder(final ViewHolder holder, final int position) {
-        final RecommandModel model = data.get(position);
+        final RecommendModel model = data.get(position);
         holder.tv_recommend.setText(model.keyword);
         if (model.formHistory) {
             holder.tv_recommend.setCompoundDrawablesWithIntrinsicBounds(null, null, context.getDrawable(R.drawable.ic_search_history), null);
