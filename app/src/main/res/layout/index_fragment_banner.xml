@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.stx.xhb.xbanner.XBanner xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:mars="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/banner"
+    android:layout_width="match_parent"
+    android:layout_height="145dp"
+    mars:pointNormal="@drawable/index_banner_point_normal"
+    mars:pointSelect="@drawable/index_banner_point_selected"
+    mars:pointsPosition="CENTER" />

@@ -12,6 +12,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RatingBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.devin.app.store.R;
@@ -19,6 +20,7 @@ import com.devin.app.store.base.BaseApp;
 import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.DownloadApkUtils;
 import com.devin.app.store.base.utils.DownloadUtils;
+import com.devin.app.store.base.utils.MeasureUtils;
 import com.devin.app.store.index.model.AppInfoDTO;
 import com.devin.tool_aop.annotation.CatchException;
 
@@ -133,7 +135,15 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         holder.tv_size.setText(model.appSize + "M");
         holder.tv_app_desc.setText(model.appDesc);
         setStatus(model, holder);
+
+        if (position % DIVISOR == 0) {
+            holder.itemView.setBackgroundColor(context.getResources().getColor(R.color._ffffff));
+        } else {
+            holder.itemView.setBackgroundColor(context.getResources().getColor(R.color._e8ebed));
+        }
     }
+
+    private static final int DIVISOR = 2;
 
     @Override
     public int getItemCount() {
@@ -143,7 +153,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
     private void setStatus(final AppInfoDTO model, final ViewHolder holder) {
         if (CommonUtils.isInstalled(context, model.packageName)) {
             holder.tv_install.setText("打开");
-            holder.layout_install.setBackground(context.getDrawable(R.drawable.index_item_downloaded_bg));
+            holder.layout_install.setBackground(context.getResources().getDrawable(R.drawable.index_item_downloaded_bg));
             holder.tv_install.setTextColor(context.getResources().getColor(R.color._ffffff));
             return;
         }
@@ -151,7 +161,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             case AppInfoDTO.PREPARE_DOWNLOAD:
                 holder.tv_install.setText("下载");
                 holder.layout_progressbar.setVisibility(View.GONE);
-                holder.layout_install.setBackground(context.getDrawable(R.drawable.index_item_install_bg));
+                holder.layout_install.setBackground(context.getResources().getDrawable(R.drawable.index_item_install_bg));
                 holder.tv_install.setTextColor(context.getResources().getColor(R.color._4dbe2e));
                 break;
             case AppInfoDTO.DOWNLOADING:
@@ -163,11 +173,11 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             case AppInfoDTO.DOWNLOADED:
                 holder.layout_progressbar.setVisibility(View.GONE);
                 holder.tv_install.setText("安装");
-                holder.layout_install.setBackground(context.getDrawable(R.drawable.index_item_downloaded_bg));
+                holder.layout_install.setBackground(context.getResources().getDrawable(R.drawable.index_item_downloaded_bg));
                 holder.tv_install.setTextColor(context.getResources().getColor(R.color._ffffff));
                 break;
             default:
-                holder.layout_install.setBackground(context.getDrawable(R.drawable.index_item_install_bg));
+                holder.layout_install.setBackground(context.getResources().getDrawable(R.drawable.index_item_install_bg));
                 holder.tv_install.setTextColor(context.getResources().getColor(R.color._4dbe2e));
                 holder.layout_progressbar.setVisibility(View.GONE);
                 holder.tv_install.setText("下载");

@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.devin.app.store.base.BaseActivity;
+import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.widget.BottomTabsLayout;
 import com.devin.app.store.base.widget.OnBottomTabClickListener;
 
@@ -31,6 +32,34 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(int position) {
                 vp.setCurrentItem(position);
+            }
+        });
+        vp.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                switch (position) {
+                    case 0:
+                        btl.setChecked(0, true);
+                        break;
+                    case 1:
+                        btl.setChecked(1, true);
+                        break;
+                    case 2:
+                        btl.setChecked(2, true);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
             }
         });
     }

@@ -4,19 +4,26 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 import com.devin.app.store.R;
 import com.devin.app.store.base.utils.CommonUtils;
+import com.devin.app.store.base.utils.LogUtils;
+import com.devin.app.store.base.utils.MeasureUtils;
 import com.devin.app.store.base.utils.ThreadUtils;
 import com.devin.app.store.index.dao.AppDAO;
 import com.devin.app.store.index.model.AppInfoDTO;
 import com.devin.app.store.search.SearchActivity;
 import com.devin.refreshview.MarsRefreshView;
 import com.devin.refreshview.MercuryOnLoadMoreListener;
+import com.stx.xhb.xbanner.XBanner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,16 +77,26 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
     private MarsRefreshView mMarsRefreshView;
     private ProgressBar progressbar;
     private AppListAdapter mAppListAdapter;
+    private View mHeaderView;
+    private XBanner banner;
+    private LinearLayout searchLayout;
+    private View searchLine;
 
     private void initView(View v) {
         v.findViewById(R.id.layout_search).setOnClickListener(this);
+        searchLine = v.findViewById(R.id.search_line);
         mMarsRefreshView = v.findViewById(R.id.marsRefreshView);
         progressbar = v.findViewById(R.id.progressbar);
         mAppListAdapter = new AppListAdapter(getContext());
+        mHeaderView = LayoutInflater.from(getContext()).inflate(R.layout.index_fragment_banner, null);
+        banner = mHeaderView.findViewById(R.id.banner);
+        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(-1, MeasureUtils.dp2px(200));
+        banner.setLayoutParams(params);
 
         mMarsRefreshView
                 .setLinearLayoutManager()
                 .setAdapter(mAppListAdapter)
+                .addHeaderView(mHeaderView)
                 .setMercuryOnLoadMoreListener(1, new MercuryOnLoadMoreListener() {
                     @Override
                     public void onLoadMore(final int page) {
@@ -112,7 +129,23 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                         }, 1 * 1000, TimeUnit.MILLISECONDS);
                     }
                 });
-
+        mMarsRefreshView.getRecyclerView().addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                searchLayoutAnim();
+            }
+        });
+        List<Integer> imgUrls = new ArrayList<>();
+        imgUrls.add(R.mipmap.banner_1);
+        imgUrls.add(R.mipmap.banner_2);
+        imgUrls.add(R.mipmap.banner_3);
+        banner.setData(imgUrls, null);
+        banner.setmAdapter((banner, model, view, position) -> {
+            ImageView iv = (ImageView) view;
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            iv.setImageResource((Integer) model);
+        });
         initData();
     }
 
@@ -184,5 +217,38 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                 startActivity(i);
                 break;
         }
+    }
+
+    private static float factor = MeasureUtils.dp2px(225);
+
+    /**
+     * 顶部滑动动画处理
+     *
+     */
+    private void searchLayoutAnim() {
+        int y = getScrollYDistance();
+        if (searchLayout == null) {
+            searchLayout = getActivity().findViewById(R.id.search_layout);
+        }
+        if (y < factor) {
+            if (searchLine.getVisibility() == View.VISIBLE) {
+                searchLine.setVisibility(View.INVISIBLE);
+            }
+            float percent = y / factor;
+            searchLayout.getBackground().mutate().setAlpha((int) (255 * percent));
+        } else {
+            if (searchLine.getVisibility() == View.INVISIBLE) {
+                searchLine.setVisibility(View.VISIBLE);
+            }
+            searchLayout.getBackground().mutate().setAlpha(255);
+        }
+    }
+
+    public int getScrollYDistance() {
+        LinearLayoutManager layoutManager = (LinearLayoutManager) mMarsRefreshView.getRecyclerView().getLayoutManager();
+        int position = layoutManager.findFirstVisibleItemPosition();
+        View firstVisiableChildView = layoutManager.findViewByPosition(position);
+        int itemHeight = firstVisiableChildView.getHeight();
+        return (position) * itemHeight - firstVisiableChildView.getTop();
     }
 }

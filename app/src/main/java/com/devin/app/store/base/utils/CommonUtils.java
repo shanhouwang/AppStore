@@ -286,4 +286,23 @@ public class CommonUtils {
             e.printStackTrace();
         }
     }
+
+    /**
+     * 获取状态栏的高度
+     *
+     * @return
+     */
+    public static int getStatusBarHeight() {
+        int statusBarHeight = 0;
+        int resourceId = BaseApp.app.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            statusBarHeight = BaseApp.app.getResources().getDimensionPixelSize(resourceId);
+        }
+        LogUtils.d(">>>>>statusBarHeight: " + statusBarHeight);
+        if (statusBarHeight <= 0) {
+            statusBarHeight = MeasureUtils.dp2px(25);
+        }
+
+        return statusBarHeight;
+    }
 }
