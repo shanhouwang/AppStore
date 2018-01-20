@@ -97,37 +97,34 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                 .setLinearLayoutManager()
                 .setAdapter(mAppListAdapter)
                 .addHeaderView(mHeaderView)
-                .setMercuryOnLoadMoreListener(1, new MercuryOnLoadMoreListener() {
-                    @Override
-                    public void onLoadMore(final int page) {
-                        if (page == 5) {
-                            mMarsRefreshView.onComplete();
-                            return;
-                        }
-                        ThreadUtils.get(ThreadUtils.Type.SCHEDULED).callBack(new ThreadUtils.CallBack() {
-                            @Override
-                            public void onResponse(Object obj) {
-                                mAppListAdapter.bindLoadMoreData((List<AppInfoDTO>) obj);
-                            }
-                        }).schedule(new ThreadUtils.MyRunnable() {
-                            @Override
-                            public Object execute() {
-                                List<AppInfoDTO> models = new ArrayList<>();
-                                for (int i = 10 * page; i < 10 * page + 10; i++) {
-                                    AppInfoDTO appInfoDTO = new AppInfoDTO();
-                                    appInfoDTO.id = i;
-                                    appInfoDTO.appName = "应用名称 " + i;
-                                    appInfoDTO.rating = i % 5;
-                                    appInfoDTO.appSize = 10 + i;
-                                    appInfoDTO.appClassify = "金融理财";
-                                    appInfoDTO.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
-                                    appInfoDTO.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
-                                    models.add(appInfoDTO);
-                                }
-                                return models;
-                            }
-                        }, 1 * 1000, TimeUnit.MILLISECONDS);
+                .setMercuryOnLoadMoreListener(1, page -> {
+                    if (page == 5) {
+                        mMarsRefreshView.onComplete();
+                        return;
                     }
+                    ThreadUtils.get(ThreadUtils.Type.SCHEDULED).callBack(new ThreadUtils.CallBack() {
+                        @Override
+                        public void onResponse(Object obj) {
+                            mAppListAdapter.bindLoadMoreData((List<AppInfoDTO>) obj);
+                        }
+                    }).schedule(new ThreadUtils.MyRunnable() {
+                        @Override
+                        public Object execute() {
+                            List<AppInfoDTO> models = new ArrayList<>();
+                            for (int i = 10 * page; i < 10 * page + 10; i++) {
+                                AppInfoDTO appInfoDTO = new AppInfoDTO();
+                                appInfoDTO.id = i;
+                                appInfoDTO.appName = "应用名称 " + i;
+                                appInfoDTO.rating = i % 5;
+                                appInfoDTO.appSize = 10 + i;
+                                appInfoDTO.appClassify = "金融理财";
+                                appInfoDTO.appDesc = "金融理财的好帮手，年利率10%以上产品很多";
+                                appInfoDTO.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
+                                models.add(appInfoDTO);
+                            }
+                            return models;
+                        }
+                    }, 1 * 1000, TimeUnit.MILLISECONDS);
                 });
         mMarsRefreshView.getRecyclerView().addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -151,13 +148,10 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
 
     private void initData() {
         progressbar.setVisibility(View.VISIBLE);
-        ThreadUtils.get(ThreadUtils.Type.SCHEDULED).callBack(new ThreadUtils.CallBack() {
-            @Override
-            public void onResponse(Object obj) {
-                progressbar.setVisibility(View.GONE);
-                mAppListAdapter.initData((List<AppInfoDTO>) obj);
-                updateStatus((List<AppInfoDTO>) obj);
-            }
+        ThreadUtils.get(ThreadUtils.Type.SCHEDULED).callBack(obj -> {
+            progressbar.setVisibility(View.GONE);
+            mAppListAdapter.initData((List<AppInfoDTO>) obj);
+            updateStatus((List<AppInfoDTO>) obj);
         }).schedule(new ThreadUtils.MyRunnable() {
             @Override
             public Object execute() {
@@ -216,6 +210,8 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
                 Intent i = new Intent(getContext(), SearchActivity.class);
                 startActivity(i);
                 break;
+            default:
+                break;
         }
     }
 
@@ -223,7 +219,6 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
 
     /**
      * 顶部滑动动画处理
-     *
      */
     private void searchLayoutAnim() {
         int y = getScrollYDistance();

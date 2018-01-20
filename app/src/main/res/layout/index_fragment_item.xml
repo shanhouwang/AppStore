@@ -15,12 +15,6 @@
         android:scaleType="fitXY"
         android:src="@mipmap/ic_launcher" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0.5dp"
-        android:layout_below="@+id/iv_app_cover"
-        android:background="#d3d3d3" />
-
     <TextView
         android:id="@+id/tv_app_name"
         android:layout_width="wrap_content"
