@@ -7,17 +7,14 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.devin.app.store.R;
-import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.TimeUtils;
+import com.devin.app.store.mine.dao.UpdateDAO;
 import com.devin.app.store.mine.model.AppUpdateInfoDTO;
 import com.devin.refreshview.MarsRefreshView;
-import com.devin.refreshview.MeasureUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import io.realm.Realm;
@@ -34,6 +30,8 @@ import io.realm.Realm;
  * Created by Devin on 2018/1/9.
  * <p>
  * 应用提醒
+ *
+ * @author Devin
  */
 public class MineFragment extends Fragment {
 
@@ -56,6 +54,11 @@ public class MineFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         initView(view);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
     }
 
     private MarsRefreshView marsRefreshView;
@@ -83,8 +86,8 @@ public class MineFragment extends Fragment {
                 info.appSize = 10 + i;
                 info.oldVersion = "V1.0";
                 info.newVersion = "V1.1";
-                info.updateTime = "更新时间：" + TimeUtils.long2String(System.currentTimeMillis(), "yyyy-MM-dd");
-                info.updateDesc = "更新说明：\n1.修改BUG\n2.修改BUG\n3.修改BUG\n4.修改BUG\n6.修改BUG";
+                info.updateTime = "更新时间：" + TimeUtils.long2String(System.currentTimeMillis(), "yyyy年MM月dd日");
+                info.updateDesc = "更新说明：\n1、修改BUG\n2、修改BUG\n3、修改BUG\n4、修改BUG\n6、修改BUG";
                 info.downloadUrl = "http://imtt.dd.qq.com/16891/F85076B8EA32D933089CEA797CF38C30.apk";
                 if (i == 1) {
                     info.packageName = "com.tencent.qqlive";
@@ -104,6 +107,23 @@ public class MineFragment extends Fragment {
                 .subscribe(apps -> {
                     progressbar.setVisibility(View.GONE);
                     adapter.initData(apps);
+
+                    UpdateDAO.getAppsByStatus(realm, downloadedApps ->
+                            Observable.create((ObservableEmitter<List<Integer>> emitter) -> {
+                                List<Integer> positions = new ArrayList<>();
+                                for (int i = 0; i < downloadedApps.size(); i++) {
+                                    for (int x = 0; x < apps.size(); x++) {
+                                        if (downloadedApps.get(i).id == apps.get(x).id) {
+                                            apps.get(x).downloadStatus = AppUpdateInfoDTO.DOWNLOADED;
+                                            apps.get(x).localPath = downloadedApps.get(i).localPath;
+                                            positions.add(x);
+                                        }
+                                    }
+                                }
+                                emitter.onNext(positions);
+                            })
+                                    .flatMap(positions -> Observable.fromIterable(positions))
+                                    .subscribe(position -> adapter.notifyItemChanged(position, R.id.tv_progress)));
                 });
     }
 }

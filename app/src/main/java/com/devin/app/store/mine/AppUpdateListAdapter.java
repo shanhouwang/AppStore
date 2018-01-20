@@ -149,7 +149,7 @@ public class AppUpdateListAdapter extends RecyclerView.Adapter<AppUpdateListAdap
         }
         switch (model.downloadStatus) {
             case AppUpdateInfoDTO.PREPARE_DOWNLOAD:
-                holder.tv_install.setText("下载");
+                holder.tv_install.setText("更新");
                 holder.layout_progressbar.setVisibility(View.GONE);
                 holder.layout_install.setBackground(context.getResources().getDrawable(R.drawable.index_item_install_bg));
                 holder.tv_install.setTextColor(context.getResources().getColor(R.color._4dbe2e));
@@ -170,7 +170,7 @@ public class AppUpdateListAdapter extends RecyclerView.Adapter<AppUpdateListAdap
                 holder.layout_install.setBackground(context.getResources().getDrawable(R.drawable.index_item_install_bg));
                 holder.tv_install.setTextColor(context.getResources().getColor(R.color._4dbe2e));
                 holder.layout_progressbar.setVisibility(View.GONE);
-                holder.tv_install.setText("下载");
+                holder.tv_install.setText("更新");
                 break;
         }
     }
