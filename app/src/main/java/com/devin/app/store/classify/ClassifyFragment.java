@@ -6,12 +6,15 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.devin.app.store.R;
 import com.devin.app.store.classify.model.ClassifyModel;
 import com.devin.refreshview.MarsRefreshView;
+import com.devin.refreshview.MeasureUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +52,10 @@ public class ClassifyFragment extends Fragment {
         mMarsRefreshView = v.findViewById(R.id.marsRefreshView);
         progressbar = v.findViewById(R.id.progressbar);
         ((TextView) v.findViewById(R.id.tv_title)).setText("应用分类");
+        FrameLayout toolbarLayout = v.findViewById(R.id.tool_bar_layout);
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) toolbarLayout.getLayoutParams();
+        params.topMargin = MeasureUtils.dp2px(getContext(),25);
+        toolbarLayout.setLayoutParams(params);
         adapter = new ClassifyAdapter(getContext());
         mMarsRefreshView.setLinearLayoutManager()
                 .setAdapter(adapter);
