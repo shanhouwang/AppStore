@@ -11,10 +11,15 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.devin.app.store.R;
+import com.devin.app.store.base.event.DownloadCancleEvent;
 import com.devin.app.store.base.utils.TimeUtils;
+import com.devin.app.store.index.AppListAdapter;
 import com.devin.app.store.mine.dao.UpdateDAO;
 import com.devin.app.store.mine.model.AppUpdateInfoDTO;
 import com.devin.refreshview.MarsRefreshView;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +47,14 @@ public class MineFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         realm = Realm.getDefaultInstance();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        realm.close();
+        EventBus.getDefault().unregister(this);
     }
 
     @Nullable
@@ -59,6 +72,11 @@ public class MineFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+    }
+
+    @Subscribe
+    public void onMessageEvent(DownloadCancleEvent event) {
+        adapter.notifyItemChanged(AppListAdapter.CLICK_POSITION, R.id.tv_install);
     }
 
     private MarsRefreshView marsRefreshView;

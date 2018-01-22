@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
@@ -147,7 +149,7 @@ public class CommonUtils {
      * @param fileSize
      * @return
      */
-    public static boolean isOkFile(String path, int fileSize) {
+    public static boolean isOkFile(String path, long fileSize) {
         File f = new File(path);
         if (!f.exists()) {
             return false;
@@ -304,5 +306,13 @@ public class CommonUtils {
         }
 
         return statusBarHeight;
+    }
+
+    /**
+     * 打开设置界面
+     */
+    public static void openWirelessSettings(Context context) {
+        Intent intent = new Intent(Settings.ACTION_SETTINGS);
+        context.startActivity(intent);
     }
 }

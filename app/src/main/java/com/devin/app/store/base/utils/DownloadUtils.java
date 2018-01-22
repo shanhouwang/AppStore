@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +18,6 @@ import okhttp3.Response;
 /**
  * Created by Devin on 17/4/27.
  */
-
 public class DownloadUtils {
 
     public static List<String> requestUrls = new ArrayList<>();
@@ -25,12 +25,13 @@ public class DownloadUtils {
     /**
      * 下载文件
      *
-     * @param url      地址
-     * @param fileName 文件名称
-     * @param progress 是否有Notification
-     * @param callBack 回调
+     * @param url        地址
+     * @param fileName   文件名称
+     * @param progress   是否有Notification
+     * @param breakPoint 是否断点下载
+     * @param callBack   回调
      */
-    public static void downAsynFile(final String url, final String fileName, final boolean progress, final DownloadCallBack callBack) {
+    public static void downAsynFile(final String url, final String fileName, boolean progress, DownloadUtils.BreakPoint breakPoint, final DownloadCallBack callBack) {
         // 多次请求只允许一次
         synchronized (requestUrls) {
             if (requestUrls.contains(url)) {
@@ -38,7 +39,22 @@ public class DownloadUtils {
             }
             requestUrls.add(url);
         }
-        Request request = new Request.Builder().url(url).build();
+
+        Request request;
+        if (null != breakPoint && breakPoint.progressLength != 0) {
+            request = new Request.Builder()
+                    .addHeader("RANGE", "bytes=" + breakPoint.progressLength + "-" + breakPoint.contentLength)
+                    .url(url)
+                    .build();
+        } else {
+            request = new Request.Builder()
+                    .url(url)
+                    .build();
+        }
+        request(url, fileName, progress, callBack, request);
+    }
+
+    private static void request(String url, String fileName, boolean progress, DownloadCallBack callBack, Request request) {
         BaseApp.mOkhttp.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -50,7 +66,7 @@ public class DownloadUtils {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 InputStream inputStream = response.body().byteStream();
-                int contentLength = (int) response.body().contentLength();
+                long contentLength = response.body().contentLength();
                 FileOutputStream fileOutputStream;
                 String localPath = getLocalFilePath(fileName);
                 File f = new File(localPath);
@@ -58,8 +74,8 @@ public class DownloadUtils {
                 try {
                     fileOutputStream = new FileOutputStream(f);
                     byte[] buffer = new byte[1024 * 1024];
-                    int len = 0;
-                    int total = 0;
+                    int len;
+                    long total = 0;
                     while ((len = inputStream.read(buffer)) != -1) {
                         fileOutputStream.write(buffer, 0, len);
                         if (progress && contentLength > 0) {
@@ -67,7 +83,7 @@ public class DownloadUtils {
                             if (callBack != null) {
                                 bean = new CallBackBean();
                                 bean.path = localPath;
-                                bean.progress = progress;
+                                bean.isNeedProgress = progress;
                                 bean.max = contentLength;
                                 bean.progressLength = total;
                                 callBack.onResponse(bean);
@@ -84,7 +100,7 @@ public class DownloadUtils {
                 if (callBack != null && !progress) {
                     bean = new CallBackBean();
                     bean.path = localPath;
-                    bean.progress = progress;
+                    bean.isNeedProgress = progress;
                     callBack.onResponse(bean);
                 }
                 // 下载完了删除此Url
@@ -143,10 +159,37 @@ public class DownloadUtils {
 
 
     public static class CallBackBean {
-        public String path; // 下载后 存储到本地的Url
-        public boolean progress; // 是否在Notification显示Progress
-        public int max; // 最大值
-        public int progressLength; // 每次更新进度
+        /**
+         * 下载后 存储到本地的Url
+         */
+        public String path;
+
+        /**
+         * 是否需要进度
+         */
+        public boolean isNeedProgress;
+
+        /**
+         * 最大值
+         */
+        public long max;
+
+        /**
+         * 每次更新进度
+         */
+        public long progressLength;
+    }
+
+    public static class BreakPoint implements Serializable{
+
+        public long progressLength;
+        public long contentLength;
+
+        public BreakPoint(long progressLength, long contentLength) {
+            this.progressLength = progressLength;
+            this.contentLength = contentLength;
+        }
+
     }
 
 }

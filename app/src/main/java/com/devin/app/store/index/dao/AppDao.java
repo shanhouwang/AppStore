@@ -15,4 +15,8 @@ public class AppDAO {
     public static void getDownloadedApps(Realm realm, RealmChangeListener<RealmResults<AppInfoDTO>> listener) {
         realm.where(AppInfoDTO.class).equalTo("downloadStatus", AppInfoDTO.DOWNLOADED).findAllAsync().addChangeListener(listener);
     }
+
+    public static AppInfoDTO getApp(Realm realm, long id) {
+        return realm.where(AppInfoDTO.class).equalTo("id", id).findFirst();
+    }
 }

@@ -18,6 +18,8 @@ import com.devin.app.store.R;
 import com.devin.app.store.base.BaseApp;
 import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.DownloadApkUtils;
+import com.devin.app.store.base.utils.DownloadUtils;
+import com.devin.app.store.base.utils.SPUtils;
 import com.devin.app.store.index.model.AppInfoDTO;
 import com.devin.tool_aop.annotation.CatchException;
 
@@ -37,6 +39,8 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
 
     private List<AppInfoDTO> data = new ArrayList<>();
 
+    private SPUtils sp;
+
     public static int CLICK_POSITION;
 
     public void initData(List<AppInfoDTO> data) {
@@ -50,8 +54,12 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         notifyDataSetChanged();
     }
 
-    public AppListAdapter(Context context) {
+    private Realm realm;
+
+    public AppListAdapter(Context context, Realm realm) {
         this.context = context;
+        this.realm = realm;
+        sp = new SPUtils("download.sp");
     }
 
     @Override
@@ -67,7 +75,6 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         holder.rating_bar.setRating(model.rating);
         holder.tv_install.setOnClickListener(v -> {
 
-
             CLICK_POSITION = position;
 
             if (CommonUtils.isInstalled(context, model.packageName)) {
@@ -81,33 +88,37 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             if (model.downloadStatus == AppInfoDTO.PREPARE_DOWNLOAD) {
                 holder.layout_progressbar.setVisibility(View.VISIBLE);
                 DownloadApkUtils
-                        .get((Activity) context, bean -> {
-                            if (bean.max > bean.progressLength) {
-                                BaseApp.mHandler.post(() -> {
-                                    int percent = (int) ((double) bean.progressLength / bean.max * 100);
-                                    model.downloadProgress = percent;
-                                    model.downloadStatus = AppInfoDTO.DOWNLOADING;
-                                    notifyItemChanged(position, R.id.tv_progress);
-                                });
-                            }
-                            if (bean.max == bean.progressLength) {
-                                BaseApp.mHandler.post(() -> {
-                                    model.downloadStatus = AppInfoDTO.DOWNLOADED;
-                                    model.localPath = bean.path;
-                                    model.downloadProgress = 100;
-                                    holder.layout_progressbar.setVisibility(View.GONE);
-                                    context.startActivity(DownloadApkUtils.getIntent(bean.path));
-                                    notifyItemChanged(position);
-                                });
+                        .get((Activity) context
+                                //, sp.getObject(model.downloadUrl)
+                                , null
+                                , bean -> {
+                                    if (bean.max > bean.progressLength) {
+                                        BaseApp.mHandler.post(() -> {
+                                            int percent = (int) ((double) bean.progressLength / bean.max * 100);
+                                            model.downloadProgress = percent;
+                                            model.downloadStatus = AppInfoDTO.DOWNLOADING;
+                                            notifyItemChanged(position, R.id.tv_progress);
+                                        });
+                                        sp.putObject(model.downloadUrl, new DownloadUtils.BreakPoint(bean.progressLength, bean.max));
+                                    }
+                                    if (bean.max == bean.progressLength) {
+                                        BaseApp.mHandler.post(() -> {
+                                            model.downloadStatus = AppInfoDTO.DOWNLOADED;
+                                            model.localPath = bean.path;
+                                            model.downloadProgress = 100;
+                                            holder.layout_progressbar.setVisibility(View.GONE);
+                                            context.startActivity(DownloadApkUtils.getIntent(bean.path));
+                                            notifyItemChanged(position);
 
-                                Realm.getDefaultInstance().executeTransaction(realm -> {
-                                    AppInfoDTO app = realm.createObject(AppInfoDTO.class, model.id);
-                                    app.localPath = bean.path;
-                                    app.downloadStatus = AppInfoDTO.DOWNLOADED;
-                                    app.appSize = bean.max;
-                                });
-                            }
-                        })
+                                            realm.executeTransaction(realm -> {
+                                                AppInfoDTO app = realm.createObject(AppInfoDTO.class, model.id);
+                                                app.localPath = bean.path;
+                                                app.downloadStatus = AppInfoDTO.DOWNLOADED;
+                                                app.appSize = bean.max;
+                                            });
+                                        });
+                                    }
+                                })
                         .download(model.downloadUrl);
             } else if (model.downloadStatus == AppInfoDTO.DOWNLOADED) {
                 if (!TextUtils.isEmpty(model.localPath)) {

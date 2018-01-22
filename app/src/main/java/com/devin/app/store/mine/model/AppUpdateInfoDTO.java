@@ -19,7 +19,7 @@ public class AppUpdateInfoDTO extends RealmObject {
 
     public String newVersion;
 
-    public int appSize;
+    public long appSize;
 
     public String updateTime;
 
@@ -29,7 +29,9 @@ public class AppUpdateInfoDTO extends RealmObject {
 
     public String packageName;
 
-    public int downloadProgress;
+    public int downloadPercent;
+
+    public long downloadProgress;
 
     public String localPath;
 

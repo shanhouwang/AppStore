@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 import com.devin.app.store.R;
+import com.devin.app.store.base.event.DownloadCancleEvent;
 import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.LogUtils;
 import com.devin.app.store.base.utils.MeasureUtils;
@@ -24,6 +25,10 @@ import com.devin.app.store.search.SearchActivity;
 import com.devin.refreshview.MarsRefreshView;
 import com.devin.refreshview.MercuryOnLoadMoreListener;
 import com.stx.xhb.xbanner.XBanner;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,12 +53,14 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         realm = Realm.getDefaultInstance();
+        EventBus.getDefault().register(this);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         realm.close();
+        EventBus.getDefault().unregister(this);
     }
 
     @Nullable
@@ -74,6 +81,11 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
         mAppListAdapter.notifyItemChanged(AppListAdapter.CLICK_POSITION, R.id.tv_install);
     }
 
+    @Subscribe
+    public void onMessageEvent(DownloadCancleEvent event) {
+        mAppListAdapter.notifyItemChanged(AppListAdapter.CLICK_POSITION, R.id.tv_install);
+    }
+
     private MarsRefreshView mMarsRefreshView;
     private ProgressBar progressbar;
     private AppListAdapter mAppListAdapter;
@@ -87,7 +99,7 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
         searchLine = v.findViewById(R.id.search_line);
         mMarsRefreshView = v.findViewById(R.id.marsRefreshView);
         progressbar = v.findViewById(R.id.progressbar);
-        mAppListAdapter = new AppListAdapter(getContext());
+        mAppListAdapter = new AppListAdapter(getContext(), realm);
         mHeaderView = LayoutInflater.from(getContext()).inflate(R.layout.index_fragment_banner, null);
         banner = mHeaderView.findViewById(R.id.banner);
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(-1, MeasureUtils.dp2px(200));

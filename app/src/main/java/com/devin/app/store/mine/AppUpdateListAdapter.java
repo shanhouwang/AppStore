@@ -17,7 +17,8 @@ import com.devin.app.store.R;
 import com.devin.app.store.base.BaseApp;
 import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.DownloadApkUtils;
-import com.devin.app.store.mine.dao.UpdateDAO;
+import com.devin.app.store.base.utils.DownloadUtils;
+import com.devin.app.store.base.utils.SPUtils;
 import com.devin.app.store.mine.model.AppUpdateInfoDTO;
 import com.devin.tool_aop.annotation.CatchException;
 
@@ -39,6 +40,8 @@ public class AppUpdateListAdapter extends RecyclerView.Adapter<AppUpdateListAdap
 
     private Realm realm;
 
+    private SPUtils sp;
+
     public static int CLICK_POSITION;
 
     public void initData(List<AppUpdateInfoDTO> data) {
@@ -55,6 +58,7 @@ public class AppUpdateListAdapter extends RecyclerView.Adapter<AppUpdateListAdap
     public AppUpdateListAdapter(Context context, Realm realm) {
         this.context = context;
         this.realm = realm;
+        sp = new SPUtils("update.sp");
     }
 
     @Override
@@ -82,40 +86,46 @@ public class AppUpdateListAdapter extends RecyclerView.Adapter<AppUpdateListAdap
                 return;
             }
             if (model.downloadStatus == AppUpdateInfoDTO.PREPARE_DOWNLOAD) {
+                model.downloadStatus = AppUpdateInfoDTO.DOWNLOADING;
                 holder.layout_progressbar.setVisibility(View.VISIBLE);
-                DownloadApkUtils
-                        .get((Activity) context, bean -> {
-                            if (bean.max > bean.progressLength) {
-                                BaseApp.mHandler.post(() -> {
-                                    int percent = (int) ((double) bean.progressLength / bean.max * 100);
-                                    model.downloadProgress = percent;
-                                    model.downloadStatus = AppUpdateInfoDTO.DOWNLOADING;
-                                    notifyItemChanged(position, R.id.tv_progress);
-                                });
-                            }
-                            if (bean.max == bean.progressLength) {
-                                BaseApp.mHandler.post(() -> {
-                                    model.downloadStatus = AppUpdateInfoDTO.DOWNLOADED;
-                                    model.localPath = bean.path;
-                                    model.downloadProgress = 100;
-                                    holder.layout_progressbar.setVisibility(View.GONE);
-                                    context.startActivity(DownloadApkUtils.getIntent(bean.path));
-                                    notifyItemChanged(position);
 
-                                    if (null != UpdateDAO.getModelById(realm, model.id)) {
-                                        return;
+                DownloadApkUtils
+                        .get((Activity) context
+                                // , sp.getObject(model.downloadUrl)
+                                , null
+                                , bean -> {
+                                    if (bean.max > bean.progressLength) {
+                                        BaseApp.mHandler.post(() -> {
+                                            int percent = (int) ((double) bean.progressLength / bean.max * 100);
+                                            model.downloadPercent = percent;
+                                            notifyItemChanged(position, R.id.tv_progress);
+                                        });
+                                        sp.putObject(model.downloadUrl, new DownloadUtils.BreakPoint(bean.progressLength, bean.max));
                                     }
-                                    realm.executeTransaction(realm -> {
-                                        AppUpdateInfoDTO app = realm.createObject(AppUpdateInfoDTO.class, model.id);
-                                        app.localPath = bean.path;
-                                        app.downloadStatus = AppUpdateInfoDTO.DOWNLOADED;
-                                        app.appSize = bean.max;
-                                    });
-                                });
-                            }
-                        })
+                                    if (bean.max == bean.progressLength) {
+                                        BaseApp.mHandler.post(() -> {
+                                            model.downloadStatus = AppUpdateInfoDTO.DOWNLOADED;
+                                            model.localPath = bean.path;
+                                            model.downloadPercent = 100;
+                                            holder.layout_progressbar.setVisibility(View.GONE);
+                                            context.startActivity(DownloadApkUtils.getIntent(bean.path));
+                                            notifyItemChanged(position);
+
+                                            realm.executeTransaction(realm -> {
+                                                AppUpdateInfoDTO newModel = realm.createObject(AppUpdateInfoDTO.class, model.id);
+                                                newModel.downloadStatus = AppUpdateInfoDTO.DOWNLOADED;
+                                                newModel.appSize = bean.max;
+                                                newModel.downloadProgress = bean.progressLength;
+                                                newModel.localPath = bean.path;
+                                            });
+                                        });
+                                    }
+                                })
                         .download(model.downloadUrl);
             } else if (model.downloadStatus == AppUpdateInfoDTO.DOWNLOADED) {
+                if (TextUtils.isDigitsOnly(model.localPath)) {
+                    return;
+                }
                 if (!TextUtils.isEmpty(model.localPath)) {
                     context.startActivity(DownloadApkUtils.getIntent(model.localPath));
                 }
@@ -158,7 +168,7 @@ public class AppUpdateListAdapter extends RecyclerView.Adapter<AppUpdateListAdap
                 if (holder.layout_progressbar.getVisibility() != View.VISIBLE) {
                     holder.layout_progressbar.setVisibility(View.VISIBLE);
                 }
-                holder.tv_progress.setText(model.downloadProgress + "%");
+                holder.tv_progress.setText(model.downloadPercent + "%");
                 break;
             case AppUpdateInfoDTO.DOWNLOADED:
                 holder.layout_progressbar.setVisibility(View.GONE);

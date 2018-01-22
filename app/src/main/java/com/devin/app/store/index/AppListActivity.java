@@ -44,7 +44,7 @@ public class AppListActivity extends BaseActivity {
         realm = Realm.getDefaultInstance();
 
         mMarsRefreshView = findViewById(R.id.marsRefreshView);
-        mAppListAdapter = new AppListAdapter(this);
+        mAppListAdapter = new AppListAdapter(this, realm);
         progressbar = findViewById(R.id.progressbar);
         findViewById(R.id.iv_back).setVisibility(View.VISIBLE);
         findViewById(R.id.iv_back).setOnClickListener(v -> finish());
@@ -86,6 +86,12 @@ public class AppListActivity extends BaseActivity {
                 });
 
         initData();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        realm.close();
     }
 
     private void initData() {

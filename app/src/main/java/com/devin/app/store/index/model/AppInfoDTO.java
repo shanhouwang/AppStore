@@ -22,7 +22,7 @@ public class AppInfoDTO extends RealmObject {
      */
     public String appClassify;
     public String appDesc;
-    public int appSize;
+    public long appSize;
 
     /**
      * 评分
@@ -36,11 +36,11 @@ public class AppInfoDTO extends RealmObject {
 
     /**
      * 下载状态
-     *
+     * <p>
      * 0：可以下载
-     *
+     * <p>
      * 1：正在下载
-     *
+     * <p>
      * 2：已经下载完成
      */
     public int downloadStatus;
@@ -51,9 +51,14 @@ public class AppInfoDTO extends RealmObject {
     public String localPath;
 
     /**
-     *下载进度
+     * 下载进度百分比
      */
-    public int downloadProgress;
+    public int downloadPercent;
+
+    /**
+     * 下载进度大小
+     */
+    public long downloadProgress;
 
     @Ignore
     public static final int PREPARE_DOWNLOAD = 0;

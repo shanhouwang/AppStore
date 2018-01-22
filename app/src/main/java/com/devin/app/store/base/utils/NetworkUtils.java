@@ -279,6 +279,18 @@ public class NetworkUtils {
     }
 
     /**
+     * 判断是否是WiFi类型的网络
+     *
+     * @return
+     */
+    public static boolean isWifi() {
+        if (getNetworkType() == NetworkType.NETWORK_WIFI) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * 获取IP地址
      * <p>需添加权限 {@code <uses-permission android:name="android.permission.INTERNET"/>}</p>
      *

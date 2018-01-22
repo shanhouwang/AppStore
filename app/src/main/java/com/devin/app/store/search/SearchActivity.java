@@ -120,7 +120,7 @@ public class SearchActivity extends BaseActivity implements View.OnClickListener
      * 点击了历史、搜索以及关键字
      */
     public void changeAppListAdapter() {
-        mAppListAdapter = new AppListAdapter(this);
+        mAppListAdapter = new AppListAdapter(this, mRealm);
         mMarsRefreshView.setAdapter(mAppListAdapter)
                 .setMercuryOnLoadMoreListener(1, page -> {
                     if (page == 5) {

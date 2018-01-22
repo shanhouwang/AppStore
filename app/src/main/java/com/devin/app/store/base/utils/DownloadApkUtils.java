@@ -15,23 +15,35 @@ import android.widget.TextView;
 
 import com.devin.app.store.R;
 import com.devin.app.store.base.BaseApp;
+import com.devin.app.store.base.event.DownloadCancleEvent;
 import com.devin.app.store.base.widget.MyToast;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
 
 /**
  * Created by Devin on 17/5/1.
+ *
+ * @author Devin
  */
-
 public class DownloadApkUtils {
 
     private Activity mActivity;
     private DownloadUtils.DownloadCallBack callBack;
+    private DownloadUtils.BreakPoint breakPoint;
 
-    public static DownloadApkUtils get(Activity activity, DownloadUtils.DownloadCallBack callBack) {
+    /**
+     * @param activity
+     * @param breakPoint 是否断点下载
+     * @param callBack   回调
+     * @return
+     */
+    public static DownloadApkUtils get(Activity activity, DownloadUtils.BreakPoint breakPoint, DownloadUtils.DownloadCallBack callBack) {
         DownloadApkUtils util = new DownloadApkUtils();
         util.mActivity = activity;
         util.callBack = callBack;
+        util.breakPoint = breakPoint;
         return util;
     }
 
@@ -58,16 +70,11 @@ public class DownloadApkUtils {
             showWarningDialog(url, fileName);
             return;
         }
-
-        DownloadUtils.getAsynFileLength(url, new DownloadUtils.DownloadCallBack() {
-            @Override
-            public void onResponse(DownloadUtils.CallBackBean bean) {
-                if (bean != null && (bean.max == apk.length())) {
-                    mActivity.startActivity(getIntent(BaseApp.sp.getString(url)));
-                } else if (bean != null && (bean.max != apk.length())) {
-                    showWarningDialog(url, fileName);
-                }
-                return;
+        DownloadUtils.getAsynFileLength(url, bean -> {
+            if (bean != null && (bean.max == apk.length())) {
+                mActivity.startActivity(getIntent(BaseApp.sp.getString(url)));
+            } else if (bean != null && (bean.max != apk.length())) {
+                showWarningDialog(url, fileName);
             }
         });
     }
@@ -79,30 +86,21 @@ public class DownloadApkUtils {
      * @param fileName
      */
     private void showWarningDialog(final String url, final String fileName) {
-        if (NetworkUtils.getWifiEnabled()) {
+        if (NetworkUtils.isWifi()) {
             doIt(url, fileName);
             return;
         }
         new AlertDialog.Builder(mActivity)
-                .setTitle("现在更新吗？")
-                .setMessage("您的手机当前没有连接WIFI，现在更新会消耗您的手机流量，您确定要现在更新吗？")
-                .setNegativeButton("待会儿再说", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                })
-                .setPositiveButton("立即更新", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        doIt(url, fileName);
-                    }
-                })
+                .setTitle("继续下载？")
+                .setMessage("您的手机当前没有连接WIFI，现在下载会消耗您的手机流量，您确定要现在下载吗？")
+                .setNegativeButton("待会儿再说", (d, w) -> EventBus.getDefault().post(new DownloadCancleEvent()))
+                .setPositiveButton("立即下载", (d, w) -> doIt(url, fileName))
                 .create()
                 .show();
     }
 
     private void doIt(String url, String fileName) {
-        DownloadUtils.downAsynFile(url, fileName, true, callBack);
+        DownloadUtils.downAsynFile(url, fileName, true, breakPoint, callBack);
     }
 
     public static Intent getIntent(String path) {
