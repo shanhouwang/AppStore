@@ -1,7 +1,6 @@
 package com.devin.app.store.index;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -21,9 +20,7 @@ import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.SPUtils;
 import com.devin.app.store.index.dao.AppDAO;
 import com.devin.app.store.index.model.AppInfoDTO;
-import com.devin.downloader.CallBackBean;
 import com.devin.downloader.MercuryDownloader;
-import com.devin.downloader.OnDownloaderListener;
 import com.devin.tool_aop.annotation.CatchException;
 
 import java.util.ArrayList;
@@ -90,7 +87,8 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             }
             if (AppInfoDTO.PREPARE_DOWNLOAD == model.downloadStatus || AppInfoDTO.PAUSE_DOWNLOAD == model.downloadStatus) {
                 model.downloadStatus = AppInfoDTO.DOWNLOADING;
-                MercuryDownloader.url(model.downloadUrl)
+                MercuryDownloader.build()
+                        .url(model.downloadUrl)
                         .activity(context)
                         .setOnCancelListener(() -> {
                             model.downloadStatus = AppInfoDTO.PREPARE_DOWNLOAD;
@@ -101,31 +99,23 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
                             model.downloadProgress = percent;
                             notifyItemChanged(position, R.id.tv_progress);
                         }))
-                        .start(new OnDownloaderListener() {
-                            @Override
-                            public void onComplete(CallBackBean bean) {
-                                BaseApp.mHandler.post(() -> {
-                                    model.localPath = bean.path;
-                                    model.downloadProgress = 100;
-                                    holder.layout_progressbar.setVisibility(View.GONE);
-                                    context.startActivity(CommonUtils.getIntent(bean.path));
-                                    notifyItemChanged(position);
+                        .setOnCompleteListener(bean -> BaseApp.mHandler.post(() -> {
+                            model.localPath = bean.path;
+                            model.downloadProgress = 100;
+                            holder.layout_progressbar.setVisibility(View.GONE);
+                            context.startActivity(CommonUtils.getIntent(bean.path));
+                            notifyItemChanged(position);
 
-                                    realm.executeTransaction(realm -> {
-                                        AppInfoDTO app = AppDAO.getApp(realm, model.id);
-                                        if (null == app) {
-                                            app = realm.createObject(AppInfoDTO.class, model.id);
-                                        }
-                                        app.localPath = bean.path;
-                                        app.downloadStatus = AppInfoDTO.DOWNLOADED;
-                                        app.appSize = bean.contentLength;
-                                    });
-                                });
-                            }
-
-                            @Override
-                            public void onError() {}
-                        });
+                            realm.executeTransaction(realm -> {
+                                AppInfoDTO app = AppDAO.getApp(realm, model.id);
+                                if (null == app) {
+                                    app = realm.createObject(AppInfoDTO.class, model.id);
+                                }
+                                app.localPath = bean.path;
+                                app.downloadStatus = AppInfoDTO.DOWNLOADED;
+                                app.appSize = bean.contentLength;
+                            });
+                        })).start();
             } else if (model.downloadStatus == AppInfoDTO.DOWNLOADING) {
                 MercuryDownloader.pause(model.downloadUrl);
                 model.downloadStatus = AppInfoDTO.PAUSE_DOWNLOAD;
