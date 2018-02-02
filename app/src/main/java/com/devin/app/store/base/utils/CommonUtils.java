@@ -10,6 +10,7 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
+import android.support.v4.content.FileProvider;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
@@ -315,4 +316,25 @@ public class CommonUtils {
         Intent intent = new Intent(Settings.ACTION_SETTINGS);
         context.startActivity(intent);
     }
+
+    public static Intent getIntent(String path) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            Uri contentUri = FileProvider.getUriForFile(BaseApp.app, "com.devin.app.store.FileProvider", new File(path));
+            intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
+        } else {
+            intent.setDataAndType(Uri.fromFile(new File(path)), "application/vnd.android.package-archive");
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        return intent;
+    }
+
+    public static boolean checkVisible(View v) {
+        if (v.getVisibility() == View.VISIBLE) {
+            return true;
+        }
+        return false;
+    }
+
 }

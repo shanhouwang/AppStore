@@ -11,16 +11,19 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.devin.app.store.R;
 import com.devin.app.store.base.BaseApp;
 import com.devin.app.store.base.utils.CommonUtils;
-import com.devin.app.store.base.utils.DownloadApkUtils;
-import com.devin.app.store.base.utils.DownloadUtils;
 import com.devin.app.store.base.utils.SPUtils;
+import com.devin.app.store.index.dao.AppDAO;
 import com.devin.app.store.index.model.AppInfoDTO;
+import com.devin.downloader.CallBackBean;
+import com.devin.downloader.MercuryDownloader;
+import com.devin.downloader.OnDownloaderListener;
 import com.devin.tool_aop.annotation.CatchException;
 
 import java.util.ArrayList;
@@ -85,44 +88,55 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
                 }
                 return;
             }
-            if (model.downloadStatus == AppInfoDTO.PREPARE_DOWNLOAD) {
-                holder.layout_progressbar.setVisibility(View.VISIBLE);
-                DownloadApkUtils
-                        .get((Activity) context
-                                //, sp.getObject(model.downloadUrl)
-                                , null
-                                , bean -> {
-                                    if (bean.max > bean.progressLength) {
-                                        BaseApp.mHandler.post(() -> {
-                                            int percent = (int) ((double) bean.progressLength / bean.max * 100);
-                                            model.downloadProgress = percent;
-                                            model.downloadStatus = AppInfoDTO.DOWNLOADING;
-                                            notifyItemChanged(position, R.id.tv_progress);
-                                        });
-                                        sp.putObject(model.downloadUrl, new DownloadUtils.BreakPoint(bean.progressLength, bean.max));
-                                    }
-                                    if (bean.max == bean.progressLength) {
-                                        BaseApp.mHandler.post(() -> {
-                                            model.downloadStatus = AppInfoDTO.DOWNLOADED;
-                                            model.localPath = bean.path;
-                                            model.downloadProgress = 100;
-                                            holder.layout_progressbar.setVisibility(View.GONE);
-                                            context.startActivity(DownloadApkUtils.getIntent(bean.path));
-                                            notifyItemChanged(position);
+            if (AppInfoDTO.PREPARE_DOWNLOAD == model.downloadStatus || AppInfoDTO.PAUSE_DOWNLOAD == model.downloadStatus) {
+                model.downloadStatus = AppInfoDTO.DOWNLOADING;
+                MercuryDownloader.url(model.downloadUrl)
+                        .activity((Activity) context)
+                        .setOnProgressListener(bean -> BaseApp.mHandler.post(() -> {
+                            int percent = (int) ((double) bean.progressLength / bean.contentLength * 100);
+                            model.downloadProgress = percent;
+                            notifyItemChanged(position, R.id.tv_progress);
+                        }))
+                        .start(new OnDownloaderListener() {
+                            @Override
+                            public void onComplete(CallBackBean bean) {
+                                BaseApp.mHandler.post(() -> {
+                                    model.localPath = bean.path;
+                                    model.downloadProgress = 100;
+                                    holder.layout_progressbar.setVisibility(View.GONE);
+                                    context.startActivity(CommonUtils.getIntent(bean.path));
+                                    notifyItemChanged(position);
 
-                                            realm.executeTransaction(realm -> {
-                                                AppInfoDTO app = realm.createObject(AppInfoDTO.class, model.id);
-                                                app.localPath = bean.path;
-                                                app.downloadStatus = AppInfoDTO.DOWNLOADED;
-                                                app.appSize = bean.max;
-                                            });
-                                        });
-                                    }
-                                })
-                        .download(model.downloadUrl);
+                                    realm.executeTransaction(realm -> {
+                                        AppInfoDTO app = AppDAO.getApp(realm, model.id);
+                                        if (null == app) {
+                                            app = realm.createObject(AppInfoDTO.class, model.id);
+                                        }
+                                        app.localPath = bean.path;
+                                        app.downloadStatus = AppInfoDTO.DOWNLOADED;
+                                        app.appSize = bean.contentLength;
+                                    });
+                                });
+                            }
+
+                            @Override
+                            public void onError() {}
+                        });
+            } else if (model.downloadStatus == AppInfoDTO.DOWNLOADING) {
+                MercuryDownloader.pause(model.downloadUrl);
+                model.downloadStatus = AppInfoDTO.PAUSE_DOWNLOAD;
+                notifyItemChanged(position);
+                realm.executeTransaction(realm -> {
+                    AppInfoDTO dto = AppDAO.getApp(realm, model.id);
+                    if (null == dto) {
+                        dto = realm.createObject(AppInfoDTO.class, model.id);
+                    }
+                    dto.downloadStatus = AppInfoDTO.PAUSE_DOWNLOAD;
+                    dto.appSize = model.downloadProgress;
+                });
             } else if (model.downloadStatus == AppInfoDTO.DOWNLOADED) {
                 if (!TextUtils.isEmpty(model.localPath)) {
-                    context.startActivity(DownloadApkUtils.getIntent(model.localPath));
+                    context.startActivity(CommonUtils.getIntent(model.localPath));
                 }
             }
         });
@@ -159,8 +173,26 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
                 holder.tv_install.setTextColor(context.getResources().getColor(R.color._4dbe2e));
                 break;
             case AppInfoDTO.DOWNLOADING:
-                if (holder.layout_progressbar.getVisibility() != View.VISIBLE) {
+                if (!CommonUtils.checkVisible(holder.layout_progressbar)) {
                     holder.layout_progressbar.setVisibility(View.VISIBLE);
+                }
+                if (!CommonUtils.checkVisible(holder.progressbar)) {
+                    holder.progressbar.setVisibility(View.VISIBLE);
+                }
+                if (CommonUtils.checkVisible(holder.progressbar)) {
+                    holder.iv_pause.setVisibility(View.GONE);
+                }
+                holder.tv_progress.setText(model.downloadProgress + "%");
+                break;
+            case AppInfoDTO.PAUSE_DOWNLOAD:
+                if (!CommonUtils.checkVisible(holder.layout_progressbar)) {
+                    holder.layout_progressbar.setVisibility(View.VISIBLE);
+                }
+                if (!CommonUtils.checkVisible(holder.iv_pause)) {
+                    holder.iv_pause.setVisibility(View.VISIBLE);
+                }
+                if (CommonUtils.checkVisible(holder.progressbar)) {
+                    holder.progressbar.setVisibility(View.GONE);
                 }
                 holder.tv_progress.setText(model.downloadProgress + "%");
                 break;
@@ -190,6 +222,8 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         TextView tv_size;
         FrameLayout layout_install;
         LinearLayout layout_progressbar;
+        ImageView iv_pause;
+        ProgressBar progressbar;
         TextView tv_install;
         TextView tv_app_desc;
         TextView tv_progress;
@@ -206,6 +240,8 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             tv_app_desc = itemView.findViewById(R.id.tv_app_desc);
             layout_install = itemView.findViewById(R.id.layout_install);
             layout_progressbar = itemView.findViewById(R.id.layout_progressbar);
+            iv_pause = itemView.findViewById(R.id.iv_pause);
+            progressbar = itemView.findViewById(R.id.progressbar);
             tv_progress = itemView.findViewById(R.id.tv_progress);
         }
     }

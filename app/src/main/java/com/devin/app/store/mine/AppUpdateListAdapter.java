@@ -16,10 +16,11 @@ import android.widget.TextView;
 import com.devin.app.store.R;
 import com.devin.app.store.base.BaseApp;
 import com.devin.app.store.base.utils.CommonUtils;
-import com.devin.app.store.base.utils.DownloadApkUtils;
-import com.devin.app.store.base.utils.DownloadUtils;
 import com.devin.app.store.base.utils.SPUtils;
 import com.devin.app.store.mine.model.AppUpdateInfoDTO;
+import com.devin.downloader.CallBackBean;
+import com.devin.downloader.MercuryDownloader;
+import com.devin.downloader.OnDownloaderListener;
 import com.devin.tool_aop.annotation.CatchException;
 
 import java.util.ArrayList;
@@ -89,45 +90,44 @@ public class AppUpdateListAdapter extends RecyclerView.Adapter<AppUpdateListAdap
                 model.downloadStatus = AppUpdateInfoDTO.DOWNLOADING;
                 holder.layout_progressbar.setVisibility(View.VISIBLE);
 
-                DownloadApkUtils
-                        .get((Activity) context
-                                // , sp.getObject(model.downloadUrl)
-                                , null
-                                , bean -> {
-                                    if (bean.max > bean.progressLength) {
-                                        BaseApp.mHandler.post(() -> {
-                                            int percent = (int) ((double) bean.progressLength / bean.max * 100);
-                                            model.downloadPercent = percent;
-                                            notifyItemChanged(position, R.id.tv_progress);
-                                        });
-                                        sp.putObject(model.downloadUrl, new DownloadUtils.BreakPoint(bean.progressLength, bean.max));
-                                    }
-                                    if (bean.max == bean.progressLength) {
-                                        BaseApp.mHandler.post(() -> {
-                                            model.downloadStatus = AppUpdateInfoDTO.DOWNLOADED;
-                                            model.localPath = bean.path;
-                                            model.downloadPercent = 100;
-                                            holder.layout_progressbar.setVisibility(View.GONE);
-                                            context.startActivity(DownloadApkUtils.getIntent(bean.path));
-                                            notifyItemChanged(position);
+                MercuryDownloader.url(model.downloadUrl)
+                        .activity((Activity) context)
+                        .setOnProgressListener(bean -> BaseApp.mHandler.post(() -> {
+                            int percent = (int) ((double) bean.progressLength / bean.contentLength * 100);
+                            model.downloadPercent = percent;
+                            notifyItemChanged(position, R.id.tv_progress);
+                        }))
+                        .start(new OnDownloaderListener() {
+                            @Override
+                            public void onComplete(CallBackBean bean) {
+                                BaseApp.mHandler.post(() -> {
+                                    model.downloadStatus = AppUpdateInfoDTO.DOWNLOADED;
+                                    model.localPath = bean.path;
+                                    model.downloadPercent = 100;
+                                    holder.layout_progressbar.setVisibility(View.GONE);
+                                    context.startActivity(CommonUtils.getIntent(bean.path));
+                                    notifyItemChanged(position);
 
-                                            realm.executeTransaction(realm -> {
-                                                AppUpdateInfoDTO newModel = realm.createObject(AppUpdateInfoDTO.class, model.id);
-                                                newModel.downloadStatus = AppUpdateInfoDTO.DOWNLOADED;
-                                                newModel.appSize = bean.max;
-                                                newModel.downloadProgress = bean.progressLength;
-                                                newModel.localPath = bean.path;
-                                            });
-                                        });
-                                    }
-                                })
-                        .download(model.downloadUrl);
+                                    realm.executeTransaction(realm -> {
+                                        AppUpdateInfoDTO newModel = realm.createObject(AppUpdateInfoDTO.class, model.id);
+                                        newModel.downloadStatus = AppUpdateInfoDTO.DOWNLOADED;
+                                        newModel.appSize = bean.contentLength;
+                                        newModel.downloadProgress = bean.progressLength;
+                                        newModel.localPath = bean.path;
+                                    });
+                                });
+                            }
+
+                            @Override
+                            public void onError() {
+                            }
+                        });
             } else if (model.downloadStatus == AppUpdateInfoDTO.DOWNLOADED) {
                 if (TextUtils.isDigitsOnly(model.localPath)) {
                     return;
                 }
                 if (!TextUtils.isEmpty(model.localPath)) {
-                    context.startActivity(DownloadApkUtils.getIntent(model.localPath));
+                    context.startActivity(CommonUtils.getIntent(model.localPath));
                 }
             }
         });

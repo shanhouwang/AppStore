@@ -67,5 +67,8 @@ public class AppInfoDTO extends RealmObject {
     public static final int DOWNLOADING = 1;
 
     @Ignore
-    public static final int DOWNLOADED = 2;
+    public static final int PAUSE_DOWNLOAD = 2;
+
+    @Ignore
+    public static final int DOWNLOADED = 3;
 }

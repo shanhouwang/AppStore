@@ -8,6 +8,7 @@ import com.devin.app.store.base.config.AppMigration;
 import com.devin.app.store.base.utils.CommonUtils;
 import com.devin.app.store.base.utils.SPUtils;
 import com.devin.app.store.base.utils.Utils;
+import com.devin.downloader.MercuryDownloader;
 
 import java.util.concurrent.TimeUnit;
 
@@ -50,6 +51,8 @@ public class BaseApp extends Application {
                 .migration(new AppMigration())
                 .deleteRealmIfMigrationNeeded()
                 .build());
+
+        MercuryDownloader.init(this, mOkhttp);
 
     }
 }
