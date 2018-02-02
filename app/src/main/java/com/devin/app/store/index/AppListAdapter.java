@@ -38,7 +38,7 @@ import io.realm.Realm;
  */
 public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolder> {
 
-    private Context context;
+    private Activity context;
 
     private List<AppInfoDTO> data = new ArrayList<>();
 
@@ -59,7 +59,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
 
     private Realm realm;
 
-    public AppListAdapter(Context context, Realm realm) {
+    public AppListAdapter(Activity context, Realm realm) {
         this.context = context;
         this.realm = realm;
         sp = new SPUtils("download.sp");
@@ -91,7 +91,11 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             if (AppInfoDTO.PREPARE_DOWNLOAD == model.downloadStatus || AppInfoDTO.PAUSE_DOWNLOAD == model.downloadStatus) {
                 model.downloadStatus = AppInfoDTO.DOWNLOADING;
                 MercuryDownloader.url(model.downloadUrl)
-                        .activity((Activity) context)
+                        .activity(context)
+                        .setOnCancelListener(() -> {
+                            model.downloadStatus = AppInfoDTO.PREPARE_DOWNLOAD;
+                            notifyItemChanged(position, R.id.tv_progress);
+                        })
                         .setOnProgressListener(bean -> BaseApp.mHandler.post(() -> {
                             int percent = (int) ((double) bean.progressLength / bean.contentLength * 100);
                             model.downloadProgress = percent;

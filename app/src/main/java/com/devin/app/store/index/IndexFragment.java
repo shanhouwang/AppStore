@@ -99,7 +99,7 @@ public class IndexFragment extends Fragment implements View.OnClickListener {
         searchLine = v.findViewById(R.id.search_line);
         mMarsRefreshView = v.findViewById(R.id.marsRefreshView);
         progressbar = v.findViewById(R.id.progressbar);
-        mAppListAdapter = new AppListAdapter(getContext(), realm);
+        mAppListAdapter = new AppListAdapter(getActivity(), realm);
         mHeaderView = LayoutInflater.from(getContext()).inflate(R.layout.index_fragment_banner, null);
         banner = mHeaderView.findViewById(R.id.banner);
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(-1, MeasureUtils.dp2px(200));
