@@ -102,6 +102,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
                         .setOnCompleteListener(bean -> BaseApp.mHandler.post(() -> {
                             model.localPath = bean.path;
                             model.downloadProgress = 100;
+                            model.downloadStatus = AppInfoDTO.DOWNLOADED;
                             holder.layout_progressbar.setVisibility(View.GONE);
                             context.startActivity(CommonUtils.getIntent(bean.path));
                             notifyItemChanged(position);
